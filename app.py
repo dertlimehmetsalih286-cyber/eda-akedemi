@@ -56,20 +56,18 @@ def ogrenciler():
 
 @app.route('/kaynaklar')
 def kaynaklar():
-    # Burada da ogretmen.html'in benzeri bir kaynaklar.html açabilirsin
-    return "<h1>Kaynaklar Sayfası Yapım Aşamasında...</h1>"
+    return render_template('kaynaklar.html')
 
 @app.route('/quiz')
 def quiz():
-    return "<h1>Quiz Yönetimi Yapım Aşamasında...</h1>"
+    return render_template('quiz.html')
 
 @app.route('/gorev')
 def gorev():
-    return "<h1>Görev Yönetimi Yapım Aşamasında...</h1>"
+    return render_template('gorev.html')
 
 @app.route('/takvim')
 def takvim():
-    return "<h1>Takvim Yapım Aşamasında...</h1>"
-
+    return render_template('takvim.html')
 if __name__ == '__main__':
     app.run(debug=True)
