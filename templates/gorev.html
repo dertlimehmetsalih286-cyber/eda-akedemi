@@ -1,13 +1,17 @@
-<main class="main-content">
-    <h1 class="page-title">☑️ Görev Yönetimi</h1>
-    <div style="background:white; padding:20px; border-radius:12px; border:1px solid #e5e7eb; margin-top:20px;">
-        <h3>Tarih Araştırması</h3>
-        <p style="color:gray;">Osmanlı dönemi hakkında araştırma yap.</p>
-        <span style="background:#dcfce7; padding:4px 8px; border-radius:4px; font-size:12px;">Düşük</span>
-    </div>
-    <div style="background:white; padding:20px; border-radius:12px; border:1px solid #e5e7eb; margin-top:20px;">
-        <h3>Fen Bilimleri Deney Raporu</h3>
-        <p style="color:gray;">Fotosentez deneyi raporunu tamamla.</p>
-        <span style="background:#fee2e2; padding:4px 8px; border-radius:4px; font-size:12px;">Yüksek</span>
-    </div>
-</main>
+{% extends "base.html" %}
+{% block content %}
+<div style="display:flex; justify-content:space-between;">
+    <h1>Görev Yönetimi</h1>
+    <button onclick="document.getElementById('modal').style.display='block'" style="background:#7c3aed; color:white; border:none; padding:10px; border-radius:8px;">+ Görev Ekle</button>
+</div>
+
+<div id="modal" style="display:none; position:fixed; top:20%; left:30%; background:white; padding:30px; border-radius:12px; box-shadow:0 0 20px rgba(0,0,0,0.2);">
+    <form action="/ekle-gorev" method="POST">
+        <select name="sinav_turu"><option>LGS</option><option>YKS</option></select>
+        <select name="ders"><option>Türkçe</option><option>Matematik</option><option>Fen</option><option>Sosyal Bilgiler</option></select>
+        <textarea name="aciklama" placeholder="Açıklama giriniz..."></textarea>
+        <input type="date" name="son_tarih">
+        <button type="submit">Görev Ekle</button>
+    </form>
+</div>
+{% endblock %}
