@@ -57,6 +57,25 @@ def login():
 @app.route('/ogretmen')
 def ogretmen_paneli():
     return render_template('ogretmen.html')
+    @app.route('/ogrenciler')
+def ogrenciler():
+    return render_template('ogrenciler.html')
+
+@app.route('/kaynaklar')
+def kaynaklar():
+    return render_template('kaynaklar.html')
+
+@app.route('/quiz')
+def quiz():
+    return render_template('quiz.html')
+
+@app.route('/gorev')
+def gorev():
+    return render_template('gorev.html')
+
+@app.route('/takvim')
+def takvim():
+    return render_template('takvim.html')
 
 if __name__ == '__main__':
     app.run(debug=True)
