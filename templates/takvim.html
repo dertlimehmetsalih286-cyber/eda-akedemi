@@ -1,20 +1,19 @@
-<!DOCTYPE html>
-<html lang="tr">
-<head>
-    <meta charset="UTF-8">
-    <title>Eda Akademi - Takvim</title>
-    </head>
-<body>
-    <main class="main-content">
-        <div class="page-header" style="display:flex; justify-content:space-between;">
-            <div><h1 class="page-title">📅 Takvim</h1><p class="page-subtitle">Öğrenciler için etkinlik ve ödev tarihlerini ayarla.</p></div>
-            <button style="background:#7c3aed; color:white; border:none; padding:10px 20px; border-radius:8px; cursor:pointer;">+ Etkinlik Ekle</button>
-        </div>
-        <div style="background:white; padding:40px; border-radius:12px; border:1px solid #e5e7eb; text-align:center;">
-            <h2 style="margin-bottom:20px;">Haziran 2026</h2>
-            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/d/d3/Calendar_icon_orange.svg/200px-Calendar_icon_orange.svg.png" style="width:100px;">
-            <p style="color:gray; margin-top:15px;">Takvim yönetimi için altyapı hazır!</p>
-        </div>
-    </main>
-</body>
-</html>
+{% extends "base.html" %}
+{% block content %}
+<div style="display:flex; justify-content:space-between; margin-bottom:20px;">
+    <h1>📅 Takvim</h1>
+    <button onclick="document.getElementById('m').style.display='block'" style="background:#7c3aed; color:white; border:none; padding:10px 20px; border-radius:8px;">+ Etkinlik Ekle</button>
+</div>
+<div id='calendar' style="background:white; padding:20px; border-radius:12px;"></div>
+<div id="m" class="modal">
+    <h3>Yeni Etkinlik</h3>
+    <input type="text" placeholder="Metin giriniz..." style="width:100%; padding:8px; margin:10px 0;">
+    <button onclick="document.getElementById('m').style.display='none'">Kaydet</button>
+</div>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var c = new FullCalendar.Calendar(document.getElementById('calendar'), { initialView: 'dayGridMonth', locale: 'tr' });
+        c.render();
+    });
+</script>
+{% endblock %}
