@@ -1,16 +1,13 @@
-<main class="main-content">
-    <div class="page-header" style="display:flex; justify-content:space-between;">
-        <div><h1 class="page-title">🧠 Quiz Yönetimi</h1><p class="page-subtitle">Haftalık testleri yönet.</p></div>
-        <button style="background:#7c3aed; color:white; border:none; padding:10px 20px; border-radius:8px; cursor:pointer;">+ Yeni Quiz</button>
-    </div>
-    <div style="display:flex; gap:20px;">
-        <div style="flex:1; background:white; padding:20px; border-radius:12px; border:1px solid #e5e7eb;">
-            <h3>1. Hafta LGS Matematik</h3>
-            <p>📖 5 Soru</p>
-        </div>
-        <div style="flex:1; background:white; padding:20px; border-radius:12px; border:1px solid #e5e7eb;">
-            <h3>Tarih (YKS)</h3>
-            <p>📖 0 Soru</p>
-        </div>
-    </div>
-</main>
+{% extends "base.html" %}
+{% block content %}
+<div style="display:flex; justify-content:space-between;">
+    <h1>🧠 Quiz Yönetimi</h1>
+    <button onclick="document.getElementById('qm').style.display='block'" style="background:#7c3aed; color:white; border:none; padding:10px; border-radius:8px;">+ Yeni Quiz</button>
+</div>
+<div id="qm" class="modal">
+    <h3>Quiz Oluştur</h3>
+    <input type="text" placeholder="Quiz Başlığı" style="width:100%; margin:5px 0;">
+    <select><option>LGS</option><option>YKS</option></select>
+    <button onclick="document.getElementById('qm').style.display='none'">Oluştur</button>
+</div>
+{% endblock %}
