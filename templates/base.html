@@ -2,7 +2,8 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <title>Eda Akademi</title>
+    <title>EduBoard</title>
+    <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js'></script>
     <style>
         * { margin:0; padding:0; box-sizing:border-box; font-family:sans-serif; }
         body { display:flex; min-height:100vh; background:#f8f9fc; }
@@ -10,6 +11,7 @@
         .nav-link { display:block; padding:12px; text-decoration:none; color:#4b5563; margin-bottom:5px; border-radius:8px; }
         .nav-link.active { background:#7c3aed; color:white; }
         .main-content { flex-grow:1; padding:40px; }
+        .modal { display:none; position:fixed; top:20%; left:35%; background:white; padding:30px; border-radius:12px; box-shadow:0 0 20px rgba(0,0,0,0.2); z-index:1000; width:400px; }
     </style>
 </head>
 <body>
@@ -21,12 +23,8 @@
         <a href="/quiz" class="nav-link">Quiz Yönetimi</a>
         <a href="/kaynaklar" class="nav-link">Kaynaklar</a>
         <a href="/ogrenciler" class="nav-link">Öğrenciler</a>
-        <div style="margin-top:auto; padding-top:20px; border-top:1px solid #eee;">
-            <a href="/" style="color:red; text-decoration:none;">↪ Çıkış Yap</a>
-        </div>
+        <div style="margin-top:auto;"><a href="/" style="color:red; text-decoration:none;">↪ Çıkış Yap</a></div>
     </aside>
-    <main class="main-content">
-        {% block content %}{% endblock %}
-    </main>
+    <main class="main-content">{% block content %}{% endblock %}</main>
 </body>
 </html>
