@@ -1,13 +1,28 @@
 {% extends "base.html" %}
 {% block content %}
-<div style="display:flex; justify-content:space-between;">
-    <h1>🧠 Quiz Yönetimi</h1>
-    <button onclick="document.getElementById('qm').style.display='block'" style="background:#7c3aed; color:white; border:none; padding:10px; border-radius:8px;">+ Yeni Quiz</button>
+<h1>🧠 Quiz Oluştur</h1>
+<div style="background:white; padding:20px; border-radius:12px;">
+    <input type="text" id="quizBaslik" placeholder="Quiz Başlığı">
+    <div id="soruAlani"></div>
+    <button onclick="soruEkle()">+ Soru Ekle</button>
+    <button onclick="quizKaydet()" style="background:green; color:white;">Quiz'i Yayınla</button>
 </div>
-<div id="qm" class="modal">
-    <h3>Quiz Oluştur</h3>
-    <input type="text" placeholder="Quiz Başlığı" style="width:100%; margin:5px 0;">
-    <select><option>LGS</option><option>YKS</option></select>
-    <button onclick="document.getElementById('qm').style.display='none'">Oluştur</button>
-</div>
+
+<script>
+    function soruEkle() {
+        let div = document.createElement('div');
+        div.innerHTML = `
+            <input type="text" placeholder="Soru metni" class="soruMetni">
+            <div class="siklar"></div>
+            <button onclick="sikEkle(this)">+ Şık Ekle</button>
+        `;
+        document.getElementById('soruAlani').appendChild(div);
+    }
+    function sikEkle(btn) {
+        let input = document.createElement('input');
+        input.type = 'text';
+        input.placeholder = 'Şık metni';
+        btn.previousElementSibling.appendChild(input);
+    }
+</script>
 {% endblock %}
