@@ -1,8 +1,9 @@
 from flask import Flask, render_template, request, redirect, url_for
 import firebase_admin
 from firebase_admin import credentials, firestore
+# FIREBASE'İN İSTEDİĞİ YENİ GÜVENLİK FİLTRESİNİ İÇERİ AKTARIYORUZ
+from google.cloud.firestore_v1.base_query import FieldFilter
 
-# İŞTE SİLİNEN O HAYATİ SATIR BURASIYDI :)
 app = Flask(__name__)
 
 # --- FIREBASE DEPOSU BAĞLANTISI ---
@@ -33,7 +34,6 @@ except Exception as e:
 
 @app.route('/')
 def index():
-    # O sadeleştirdiğimiz temiz giriş ekranını gösterir
     return render_template('index.html')
 
 @app.route('/login', methods=['POST'])
@@ -43,8 +43,8 @@ def login():
 
     try:
         kullanicilar_ref = db.collection('kullanicilar')
-        # Sadece kullanıcı adı ve şifreyi kontrol ediyoruz, rolü sistem bulacak
-        sorgu = kullanicilar_ref.where('kullanici_adi', '==', kullanici).where('sifre', '==', sifre).stream()
+        # YENİ VE HATASIZ ARAMA YÖNTEMİ (FIELDFILTER İLE)
+        sorgu = kullanicilar_ref.where(filter=FieldFilter('kullanici_adi', '==', kullanici)).where(filter=FieldFilter('sifre', '==', sifre)).stream()
         
         giris_basarili = False
         bulunan_rol = ""
