@@ -1,7 +1,14 @@
-<main class="main-content">
-    <h1 class="page-title">📚 Kaynak Yönetimi</h1>
-    <div style="background:white; padding:20px; border-radius:12px; border:1px solid #e5e7eb; max-width:300px;">
-        <h3>Rehberlik Sistemi</h3>
-        <a href="https://rehberlik-sistemi.onrender.com/" target="_blank" style="color:#7c3aed;">Linke Git</a>
-    </div>
-</main>
+{% extends "base.html" %}
+{% block content %}
+<div style="display:flex; justify-content:space-between;">
+    <h1>📚 Kaynak Yönetimi</h1>
+    <button onclick="document.getElementById('km').style.display='block'" style="background:#7c3aed; color:white; border:none; padding:10px; border-radius:8px;">+ Kaynak Ekle</button>
+</div>
+<div id="km" class="modal">
+    <h3>Yeni Kaynak</h3>
+    <input type="text" placeholder="Başlık" style="width:100%; margin:5px 0;">
+    <select><option>Link</option><option>Dosya</option></select>
+    <input type="text" placeholder="https://" style="width:100%; margin:5px 0;">
+    <button onclick="document.getElementById('km').style.display='none'">Kaynak Ekle</button>
+</div>
+{% endblock %}
