@@ -2,114 +2,61 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Eda Akademi - Akıllı Testler</title>
     <style>
-        /* Genel İskelet */
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        body { display: flex; min-height: 100vh; background-color: #f8f9fc; }
+        * { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI', sans-serif; }
+        body { display:flex; background:#f8f9fc; min-height:100vh; }
         
-        /* SABİT SOL MENÜ (Tüm İkonlar ve Profil Kutusu Geri Geldi) */
-        .sidebar { width: 260px; background-color: white; border-right: 1px solid #e5e7eb; display: flex; flex-direction: column; padding: 20px 0; position: fixed; height: 100vh; top: 0; left: 0; z-index: 1000; }
-        .logo-container { display: flex; align-items: center; padding: 0 20px 30px 20px; font-size: 22px; font-weight: bold; color: #111827; }
-        .logo-icon { background-color: #7c3aed; width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-right: 15px; }
-        .logo-icon svg { width: 24px; height: 24px; fill: white; }
-        .nav-links { list-style: none; flex-grow: 1; }
-        .nav-item { padding: 0 15px; margin-bottom: 5px; }
-        .nav-link { display: flex; align-items: center; padding: 12px 20px; text-decoration: none; color: #4b5563; font-weight: 500; border-radius: 8px; transition: all 0.2s; }
-        .nav-link:hover { background-color: #f3f4f6; color: #111827; }
-        .nav-link.active { background-color: #7c3aed; color: white; }
-        .nav-icon { margin-right: 15px; font-size: 18px; width: 24px; text-align: center; }
+        .sidebar { width:260px; background:white; border-right:1px solid #e5e7eb; position:fixed; height:100vh; z-index:1000; padding:20px; }
+        .logo-container { font-weight:bold; font-size:22px; margin-bottom:30px; display:flex; align-items:center; gap:10px; }
+        .nav-link { display:block; padding:12px; text-decoration:none; color:#4b5563; font-weight:500; border-radius:8px; margin-bottom:5px; }
+        .nav-link.active { background:#7c3aed; color:white; }
         
-        /* Kullanıcı Profili */
-        .user-profile-box { margin: 20px 15px; padding: 15px; background: #f3f4f6; border-radius: 12px; }
-        .user-name { font-weight: bold; color: #111827; font-size: 15px; margin-bottom: 2px; }
-        .user-role { color: #6b7280; font-size: 13px; }
-        .logout-section { padding: 0 15px 20px 15px; }
-        .logout-btn { color: #ef4444; text-decoration: none; font-size: 14px; font-weight: 500; display: flex; align-items: center; gap: 10px; }
-
-        /* İçerik Alanı */
-        .main-content { margin-left: 260px; padding: 40px; width: calc(100% - 260px); max-width: 900px; }
-        .page-title { font-size: 28px; font-weight: bold; color: #111827; margin-bottom: 8px; }
-        .page-subtitle { color: #6b7280; font-size: 15px; margin-bottom: 40px; }
+        .main-content { margin-left:260px; padding:40px; width:calc(100% - 260px); }
         
-        /* Kart Tasarımı */
-        .quiz-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; }
-        .quiz-card { background: white; padding: 25px; border-radius: 16px; border: 1px solid #e5e7eb; box-shadow: 0 2px 4px rgba(0,0,0,0.02); transition: all 0.2s; }
-        .quiz-card:hover { border-color: #7c3aed; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-        .quiz-tags { margin-bottom: 15px; display: flex; gap: 10px; }
-        .tag { padding: 4px 10px; border-radius: 15px; font-size: 12px; font-weight: 600; }
-        .tag-yks { background: #fae8ff; color: #c026d3; }
-        .tag-lgs { background: #e0e7ff; color: #4f46e5; }
-        .tag-genel { background: #f3f4f6; color: #4b5563; }
-        .tag-hafta { background: #f59e0b; color: white; }
+        .quiz-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(350px, 1fr)); gap:20px; }
+        .quiz-card { background:white; padding:25px; border-radius:16px; border:1px solid #e5e7eb; }
         
-        /* Test Modal (Sınav Ekranı) */
-        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 9999; padding: 50px; display: none; overflow-y: auto; }
-        .progress-bar { height: 8px; background: #e5e7eb; border-radius: 4px; margin-bottom: 30px; }
-        .progress-fill { height: 100%; background: #7c3aed; border-radius: 4px; width: 0%; transition: width 0.3s ease; }
-        .sik { display: block; padding: 18px; margin: 15px 0; border: 2px solid #e5e7eb; border-radius: 12px; cursor: pointer; font-weight: 500; font-size: 15px; color: #4b5563; transition: all 0.2s; }
-        .sik:hover { border-color: #7c3aed; background: #f3e8ff; }
-        .btn-purple { background: #7c3aed; color: white; border: none; padding: 15px 30px; border-radius: 12px; font-size: 15px; font-weight: bold; cursor: pointer; width: 100%; transition: background 0.2s; }
-        .btn-purple:hover { background: #6d28d9; }
+        .modal { position:fixed; top:0; left:0; width:100%; height:100%; background:white; z-index:9999; padding:50px; display:none; overflow-y:auto; }
+        .progress-bar { height:8px; background:#e5e7eb; border-radius:4px; margin-bottom:30px; }
+        .progress-fill { height:100%; background:#7c3aed; border-radius:4px; width:0%; transition:0.3s; }
+        .sik { display:block; padding:18px; margin:15px 0; border:2px solid #e5e7eb; border-radius:12px; cursor:pointer; font-weight:500; }
+        .sik:hover { border-color:#7c3aed; }
+        .btn-purple { background:#7c3aed; color:white; border:none; padding:15px 30px; border-radius:12px; font-size:16px; cursor:pointer; width:100%; font-weight:bold;}
+        .btn-purple:disabled { background:#9ca3af; cursor:not-allowed; }
         
-        /* Sonuç Analizi */
-        .sonuc-kutu { text-align: center; max-width: 600px; margin: auto; }
-        .cevap-karti { background: #f9fafb; padding: 20px; border-radius: 12px; margin: 15px 0; text-align: left; border: 1px solid #e5e7eb; }
-        .dogru-cik { background: #dcfce7; border-color: #22c55e; }
-        .yanlis-cik { background: #fee2e2; border-color: #ef4444; }
+        .sonuc-karti { background:#f9fafb; padding:20px; border-radius:12px; margin:15px 0; border:1px solid #e5e7eb; }
+        .dogru-cik { background:#dcfce7; border-color:#22c55e; }
+        .yanlis-cik { background:#fee2e2; border-color:#ef4444; }
     </style>
 </head>
 <body>
 
     <aside class="sidebar">
-        <div class="logo-container">
-            <div class="logo-icon">
-                <svg viewBox="0 0 24 24"><path d="M12 3L1 9l4 2.18v6L12 21l7-3.82v-6l2.81-1.53L12 3zm6.82 6L12 12.72 5.18 9 12 5.28 18.82 9zM17 15.99l-5 2.73-5-2.73v-3.72l5 2.73 5-2.73v3.72z"/></svg>
-            </div>
-            Eda Akademi
-        </div>
-        <ul class="nav-links">
-            <li class="nav-item"><a href="/ogrenci" class="nav-link"><span class="nav-icon">⊞</span> Dashboard</a></li>
-            <li class="nav-item"><a href="/ogrenci_takvim" class="nav-link"><span class="nav-icon">📅</span> Takvim</a></li>
-            <li class="nav-item"><a href="/ogrenci_gorevler" class="nav-link"><span class="nav-icon">☑️</span> Görevler</a></li>
-            <li class="nav-item"><a href="/ogrenci_testler" class="nav-link active"><span class="nav-icon">🧠</span> Akıllı Testler</a></li>
-            <li class="nav-item"><a href="/ogrenci_kaynaklar" class="nav-link"><span class="nav-icon">📚</span> Kaynaklar</a></li>
-            <li class="nav-item"><a href="/ogrenci_siralama" class="nav-link"><span class="nav-icon">🏆</span> Sıralama</a></li>
-        </ul>
-        
-        <div class="user-profile-box">
-            <div class="user-name">{{ session.isim if session.isim else 'Öğrenci' }}</div>
-            <div class="user-role">Öğrenci</div>
-        </div>
-        
-        <div class="logout-section">
-            <a href="/logout" class="logout-btn">↪ Çıkış Yap</a>
-        </div>
+        <div class="logo-container">Eda Akademi</div>
+        <nav>
+            <a href="/ogrenci" class="nav-link">Dashboard</a>
+            <a href="/ogrenci_takvim" class="nav-link">Takvim</a>
+            <a href="/ogrenci_gorevler" class="nav-link">Görevler</a>
+            <a href="/ogrenci_testler" class="nav-link active">Akıllı Testler</a>
+            <a href="/ogrenci_kaynaklar" class="nav-link">Kaynaklar</a>
+            <a href="/ogrenci_siralama" class="nav-link">Sıralama</a>
+        </nav>
+        <div style="margin-top:auto; padding-top:20px;"><a href="/logout" style="color:red; text-decoration:none;">Çıkış Yap</a></div>
     </aside>
 
     <main class="main-content">
         <h1 class="page-title">Akıllı Testler</h1>
-        <p class="page-subtitle">Öğretmenin hazırladığı haftalık quiz'leri çöz ve puan kazan.</p>
+        <p class="page-subtitle" style="margin-bottom:30px; color:gray;">Öğretmenin hazırladığı quiz'leri çöz, anında puan kazan.</p>
         
         <div class="quiz-grid">
-            {% if quizler|length == 0 %}
-                <div style="grid-column: 1 / -1; text-align:center; padding:40px; color:#6b7280; border:1px dashed #d1d5db; border-radius:12px;">
-                    Öğretmen henüz bir test eklemedi.
-                </div>
-            {% else %}
-                {% for q in quizler %}
-                <div class="quiz-card">
-                    <div class="quiz-tags">
-                        <span class="tag {% if q.sinav_turu == 'LGS' %}tag-lgs{% elif q.sinav_turu == 'YKS' %}tag-yks{% else %}tag-genel{% endif %}">{{ q.sinav_turu }}</span> 
-                        <span class="tag tag-hafta">{{ q.hafta }}</span>
-                    </div>
-                    <h2 style="font-size: 18px; color: #111827; margin-bottom: 8px;">{{ q.baslik }}</h2>
-                    <p style="color: #6b7280; font-size: 14px; margin-bottom: 20px; line-height: 1.5;">{{ q.aciklama }}</p>
-                    <button class="btn-purple" onclick="sinaviBaslat('{{ q.id }}')">Teste Başla</button>
-                </div>
-                {% endfor %}
-            {% endif %}
+            {% for q in quizler %}
+            <div class="quiz-card">
+                <h2>{{ q.baslik }}</h2>
+                <p style="color:gray; font-size:14px; margin:10px 0;">{{ q.aciklama }}</p>
+                <button id="btn-{{ q.id }}" class="btn-purple" onclick="sinaviBaslat('{{ q.id }}')">Teste Başla</button>
+            </div>
+            {% endfor %}
         </div>
     </main>
 
@@ -118,12 +65,29 @@
     <script>
         const tumSorular = {{ sorular | tojson | safe }};
         let aktifSorular = [], index = 0, skor = 0, cevaplar = [];
+        let aktifQuizId = "";
+
+        // ÖĞRENCİNİN HAFIZASI: Daha önce çözdüğü testleri hatırla
+        const ogrenciHafizasi = "cozulmusTestler_{{ session.isim }}";
+        let cozulenTestler = JSON.parse(localStorage.getItem(ogrenciHafizasi)) || [];
+
+        // Sayfa açılınca, çözülmüş testlerin butonunu gri yap ve tıkalamayı kapat
+        document.addEventListener("DOMContentLoaded", () => {
+            cozulenTestler.forEach(qId => {
+                let btn = document.getElementById('btn-' + qId);
+                if(btn) {
+                    btn.innerText = "✔ Çözüldü";
+                    btn.disabled = true;
+                }
+            });
+        });
 
         function sinaviBaslat(qId) {
+            aktifQuizId = qId;
             aktifSorular = tumSorular.filter(s => s.quiz_id === qId);
             
             if(aktifSorular.length === 0) {
-                alert("Bu testte henüz soru bulunmuyor.");
+                alert("Bu testte henüz soru yok.");
                 return;
             }
             
@@ -136,15 +100,10 @@
             let s = aktifSorular[index];
             let ilerleme = (index / aktifSorular.length) * 100;
             document.getElementById('sinav-alani').innerHTML = `
-                <div style="max-width:700px; margin:auto; background:white; padding:40px; border-radius:16px; box-shadow:0 10px 25px rgba(0,0,0,0.05); border:1px solid #e5e7eb;">
-                    <div style="display:flex; justify-content:space-between; margin-bottom:15px; font-weight:600; color:#4b5563; font-size:14px;">
-                        <span>Soru ${index+1} / ${aktifSorular.length}</span>
-                        <span>%${ilerleme.toFixed(0)} tamamlandı</span>
-                    </div>
+                <div style="max-width:700px; margin:auto; background:white; padding:40px; border-radius:16px; border:1px solid #e5e7eb;">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:10px;"><span>Soru ${index+1}/${aktifSorular.length}</span></div>
                     <div class="progress-bar"><div class="progress-fill" style="width:${ilerleme}%"></div></div>
-                    
-                    <h2 style="margin-bottom:30px; color:#111827; font-size:20px; line-height:1.5;">${s.soru_metni}</h2>
-                    
+                    <h2 style="margin-bottom:30px;">${s.soru_metni}</h2>
                     ${['A','B','C','D'].map(h => `<div class="sik" onclick="cevapVer('${h}')"><b>${h})</b> ${s[h.toLowerCase()]}</div>`).join('')}
                 </div>`;
         }
@@ -154,38 +113,43 @@
             cevaplar.push({soru: s, secim: secim});
             if(secim === s.dogru) skor++;
             index++;
-            if(index < aktifSorular.length) {
-                soruEkraniCiz(); 
-            } else {
-                sonucGoster();
-            }
+            if(index < aktifSorular.length) soruEkraniCiz(); else sonucGoster();
         }
 
         function sonucGoster() {
-            let basariYuzdesi = (skor / aktifSorular.length) * 100;
-            let html = `
-                <div class="sonuc-kutu" style="background:white; padding:40px; border-radius:16px; box-shadow:0 10px 25px rgba(0,0,0,0.05); border:1px solid #e5e7eb;">
-                    <h1 style="color:#111827;">Test Bitti!</h1>
-                    <div style="font-size:60px; font-weight:bold; margin:20px 0; color:#7c3aed;">%${basariYuzdesi.toFixed(0)}</div>
-                    <p style="color:#4b5563; font-size:16px; margin-bottom:20px;">${aktifSorular.length} sorudan ${skor} doğru yaptın.</p>
-                    <button class="btn-purple" style="margin-bottom:30px;">+${skor * 10} Puan kazandın! 🎉</button>
-                    
-                    <h3 style="text-align:left; color:#111827; margin-bottom:15px;">CEVAPLAR</h3>`;
+            let kazanilanPuan = skor * 10;
+            
+            // EĞER İLK KEZ ÇÖZÜYORSA VE PUAN KAZANDIYSA SİSTEME GÖNDER
+            if(kazanilanPuan > 0 && !cozulenTestler.includes(aktifQuizId)) {
+                
+                // Arka planda Firebase'i güncellemesi için sinyal yolla
+                fetch('/puan_ekle', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ puan: kazanilanPuan })
+                });
+
+                // Testi tekrar çözememesi için hafızaya kaydet
+                cozulenTestler.push(aktifQuizId);
+                localStorage.setItem(ogrenciHafizasi, JSON.stringify(cozulenTestler));
+            }
+
+            let html = `<div style="max-width:600px; margin:auto; text-align:center;">
+                        <h1>Test Bitti!</h1>
+                        <div style="font-size:50px; font-weight:bold; margin:20px; color:#7c3aed;">%${(skor/aktifSorular.length*100).toFixed(0)}</div>
+                        <p style="margin-bottom:20px;">${skor}/${aktifSorular.length} doğru yaptın.</p>
+                        <button class="btn-purple" style="margin-bottom:30px;">+${kazanilanPuan} Puan kazandın! 🎉</button>
+                        <h3 style="text-align:left;">CEVAPLAR</h3>`;
             
             cevaplar.forEach((c, i) => {
-                let durumu = c.secim === c.soru.dogru ? 'dogru-cik' : 'yanlis-cik';
-                let isaret = c.secim === c.soru.dogru ? '✔' : '✖';
-                html += `
-                    <div class="cevap-karti ${durumu}">
-                        <p style="font-weight:600; margin-bottom:10px;">${i+1}. ${c.soru.soru_metni}</p>
-                        <p style="font-size:14px; margin-bottom:5px;"><b>Senin Cevabın:</b> ${c.secim} ${isaret}</p>
-                        <p style="font-size:14px; margin-bottom:10px;"><b>Doğru Cevap:</b> ${c.soru.dogru}</p>
-                        <p style="font-size:13px; color:#6b7280; border-top:1px solid rgba(0,0,0,0.1); padding-top:10px;"><i>Çözüm: ${c.soru.cozum}</i></p>
-                    </div>`;
+                let durum = c.secim === c.soru.dogru ? 'dogru-cik' : 'yanlis-cik';
+                html += `<div class="sonuc-karti ${durum}" style="text-align:left;">
+                            <p><b>${i+1}.</b> ${c.soru.soru_metni}</p>
+                            <p>Senin Cevabın: ${c.secim} | Doğru Cevap: ${c.soru.dogru}</p>
+                            <p style="font-size:13px; margin-top:5px; color:gray;"><i>Çözüm: ${c.soru.cozum}</i></p>
+                        </div>`;
             });
-            
             html += `<button class="btn-purple" style="margin-top:20px;" onclick="location.reload()">Panele Dön</button></div>`;
-            
             document.getElementById('sinav-alani').innerHTML = html;
         }
     </script>
