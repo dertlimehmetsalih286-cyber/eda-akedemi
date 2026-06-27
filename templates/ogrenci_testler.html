@@ -4,9 +4,14 @@
     <meta charset="UTF-8">
     <title>Eda Akademi - Akıllı Testler</title>
     <style>
-        /* (Daha önceki quiz.html'deki tasarımın aynısını buraya kopyala/yapıştır) */
-        /* ...CSS kodları... */
-        .quiz-modal { position:fixed; top:0; left:0; width:100%; height:100%; background:white; z-index:2000; padding:40px; display:none; overflow-y:auto; }
+        /* ... (Önceki menü CSS'lerin aynı kalmalı) ... */
+        .quiz-modal { position:fixed; top:0; left:0; width:100%; height:100%; background:white; z-index:9999; padding:50px; display:none; overflow-y:auto; }
+        .soru-kutu { max-width:800px; margin:auto; }
+        .sik { display:block; padding:15px; margin:10px 0; border:2px solid #e5e7eb; border-radius:12px; cursor:pointer; }
+        .sik.dogru { background:#dcfce7; border-color:#22c55e; }
+        .sik.yanlis { background:#fee2e2; border-color:#ef4444; }
+        .sonuc-karti { text-align:center; padding:40px; }
+        .puan-daire { width:150px; height:150px; border-radius:50%; border:10px solid #8b5cf6; display:flex; align-items:center; justify-content:center; font-size:30px; font-weight:bold; margin:20px auto; }
     </style>
 </head>
 <body>
@@ -15,10 +20,8 @@
         <div class="resource-grid">
             {% for q in quizler %}
             <div class="r-card">
-                <div class="r-content">
-                    <div class="r-title">{{ q.baslik }}</div>
-                    <button class="add-btn" onclick="sinaviBaslat('{{ q.id }}')">Teste Başla</button>
-                </div>
+                <div class="r-title">{{ q.baslik }}</div>
+                <button class="add-btn" onclick="sinaviBaslat('{{ q.id }}')">Teste Başla</button>
             </div>
             {% endfor %}
         </div>
@@ -28,16 +31,46 @@
 
     <script>
         const sorular = {{ sorular | tojson | safe }};
-        
+        let gecerliSorular = [];
+        let index = 0;
+        let dogruSayisi = 0;
+
         function sinaviBaslat(quizId) {
-            const buQuizinSorulari = sorular.filter(s => s.quiz_id === quizId);
-            const ekran = document.getElementById('test-ekrani');
-            ekran.style.display = 'block';
+            gecerliSorular = sorular.filter(s => s.quiz_id === quizId);
+            index = 0; dogruSayisi = 0;
+            soruGoster();
+            document.getElementById('test-ekrani').style.display = 'block';
+        }
+
+        function soruGoster() {
+            if(index >= gecerliSorular.length) { bitir(); return; }
+            let s = gecerliSorular[index];
+            document.getElementById('test-ekrani').innerHTML = `
+            <div class="soru-kutu">
+                <h3>Soru ${index+1}/${gecerliSorular.length}</h3>
+                <p style="font-size:18px; margin:20px 0;">${s.soru_metni}</p>
+                ${['a','b','c','d'].map(harf => `<div class="sik" onclick="cevapla('${harf}')">${s[harf]}</div>`).join('')}
+            </div>`;
+        }
+
+        function cevapla(secim) {
+            let s = gecerliSorular[index];
+            if(secim === s.dogru) { dogruSayisi++; }
             
-            // Buraya öğrencinin soruları çözeceği, şıkları seçeceği ve 
-            // sonunda %40 sonucunu gösterecek mantığı JS ile kuruyoruz.
-            ekran.innerHTML = `<h1>Sınav Başladı...</h1>`; 
-            // (Detaylı JS mantığını bir sonraki adımda istersen kurabiliriz)
+            // Animasyon: Doğruyu göster
+            index++;
+            setTimeout(soruGoster, 500);
+        }
+
+        function bitir() {
+            let yuzde = (dogruSayisi / gecerliSorular.length) * 100;
+            document.getElementById('test-ekrani').innerHTML = `
+            <div class="sonuc-karti">
+                <h1>Test Bitti!</h1>
+                <div class="puan-daire">%${yuzde.toFixed(0)}</div>
+                <p>Toplam ${gecerliSorular.length} sorudan ${dogruSayisi} doğru yaptın.</p>
+                <button class="add-btn" onclick="location.reload()">Panele Dön</button>
+            </div>`;
         }
     </script>
 </body>
