@@ -1,15 +1,193 @@
-{% extends "base.html" %}
-{% block content %}
-<div style="display:flex; justify-content:space-between;">
-    <h1>Görev Yönetimi</h1>
-    <button onclick="document.getElementById('gm').style.display='block'" style="background:#7c3aed; color:white; border:none; padding:10px; border-radius:8px;">+ Görev Ekle</button>
-</div>
-<div id="gm" class="modal">
-    <h3>Yeni Görev</h3>
-    <select><option>LGS</option><option>YKS</option></select>
-    <select><option>Türkçe</option><option>Matematik</option><option>Fen</option><option>Sosyal Bilgiler</option></select>
-    <textarea placeholder="Açıklama giriniz..." style="width:100%; height:60px;"></textarea>
-    <input type="date" style="width:100%;">
-    <button onclick="document.getElementById('gm').style.display='none'">Görev Ekle</button>
-</div>
-{% endblock %}
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eda Akademi - Görev Yönetimi</title>
+    <style>
+        /* Genel Düzen ve Sabit Menü */
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { display: flex; min-height: 100vh; background-color: #f8f9fc; }
+        .sidebar { width: 260px; background-color: white; border-right: 1px solid #e5e7eb; display: flex; flex-direction: column; padding: 20px 0; position: fixed; height: 100vh; }
+        .logo-container { display: flex; align-items: center; padding: 0 20px 30px 20px; font-size: 22px; font-weight: bold; color: #111827; }
+        .logo-icon { background-color: #7c3aed; width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-right: 15px; }
+        .logo-icon svg { width: 24px; height: 24px; fill: white; }
+        .nav-links { list-style: none; flex-grow: 1; }
+        .nav-item { padding: 0 15px; margin-bottom: 5px; }
+        .nav-link { display: flex; align-items: center; padding: 12px 20px; text-decoration: none; color: #4b5563; font-weight: 500; border-radius: 8px; transition: all 0.2s; }
+        .nav-link:hover { background-color: #f3f4f6; color: #111827; }
+        .nav-link.active { background-color: #7c3aed; color: white; }
+        .nav-icon { margin-right: 15px; font-size: 18px; }
+        .logout-section { padding: 20px; border-top: 1px solid #e5e7eb; margin-top: auto; }
+        .logout-btn { color: #dc2626; text-decoration: none; font-size: 14px; font-weight: 500; display: flex; align-items: center; }
+        
+        /* İçerik Alanı */
+        .main-content { flex-grow: 1; padding: 40px; margin-left: 260px; max-width: 900px; }
+        .page-header { margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center; }
+        .page-title { font-size: 28px; font-weight: bold; color: #111827; margin-bottom: 8px; }
+        .page-subtitle { color: #6b7280; font-size: 15px; }
+        .add-btn { background: #7c3aed; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 14px; }
+        
+        /* Filtre Butonları */
+        .filter-container { display: flex; gap: 10px; margin-bottom: 30px; }
+        .filter-btn { padding: 6px 16px; border-radius: 20px; border: 1px solid #e5e7eb; background: white; color: #4b5563; font-size: 14px; font-weight: 500; display: flex; align-items: center; gap: 8px; cursor: pointer; }
+        .filter-btn.active { background: #7c3aed; color: white; border-color: #7c3aed; }
+        .filter-badge { background: #f3f4f6; color: #4b5563; border-radius: 12px; padding: 2px 8px; font-size: 12px; font-weight: bold; }
+        .filter-btn.active .filter-badge { background: #f59e0b; color: white; }
+
+        /* Görev Kartları */
+        .task-card { background: white; padding: 20px; border-radius: 12px; border: 1px solid #e5e7eb; margin-bottom: 20px; position: relative; }
+        .task-tags { display: flex; gap: 10px; margin-bottom: 12px; align-items: center; }
+        .tag-exam { padding: 4px 10px; border-radius: 15px; font-size: 12px; font-weight: 600; }
+        .tag-yks { background: #fae8ff; color: #c026d3; }
+        .tag-lgs { background: #e0e7ff; color: #4f46e5; }
+        .tag-genel { background: #f3f4f6; color: #4b5563; }
+        .tag-subject { padding: 4px 10px; border-radius: 15px; font-size: 12px; font-weight: 500; background: #f3f4f6; color: #6b7280; display: flex; align-items: center; gap: 4px; }
+        .task-title { font-size: 18px; font-weight: 600; color: #111827; margin-bottom: 8px; }
+        .task-desc { font-size: 14px; color: #6b7280; margin-bottom: 15px; }
+        .task-footer { display: flex; gap: 15px; align-items: center; font-size: 13px; }
+        .priority { padding: 4px 10px; border-radius: 15px; font-weight: 600; }
+        .pri-Yüksek { background: #fee2e2; color: #ef4444; }
+        .pri-Orta { background: #fef08a; color: #ca8a04; }
+        .pri-Düşük { background: #dcfce7; color: #22c55e; }
+        .task-date { color: #6b7280; display: flex; align-items: center; gap: 5px; }
+        
+        /* Modal Penceresi */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); z-index: 1000; }
+        .modal-box { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 30px; border-radius: 16px; width: 500px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; font-size: 14px; font-weight: 500; color: #374151; }
+        .form-control { width: 100%; padding: 10px 12px; border: 1px solid #d1d5db; border-radius: 8px; outline: none; font-size: 14px; }
+        .form-control:focus { border-color: #7c3aed; }
+        .form-row { display: flex; gap: 15px; }
+        .form-row .form-group { flex: 1; }
+    </style>
+</head>
+<body>
+
+    <aside class="sidebar">
+        <div class="logo-container">
+            <div class="logo-icon">
+                <svg viewBox="0 0 24 24"><path d="M12 3L1 9l4 2.18v6L12 21l7-3.82v-6l2.81-1.53L12 3zm6.82 6L12 12.72 5.18 9 12 5.28 18.82 9zM17 15.99l-5 2.73-5-2.73v-3.72l5 2.73 5-2.73v3.72z"/></svg>
+            </div>
+            EduBoard
+        </div>
+        <ul class="nav-links">
+            <li class="nav-item"><a href="/ogretmen" class="nav-link"><span class="nav-icon">⊞</span> Dashboard</a></li>
+            <li class="nav-item"><a href="/takvim" class="nav-link"><span class="nav-icon">📅</span> Takvim</a></li>
+            <li class="nav-item"><a href="/gorev" class="nav-link active"><span class="nav-icon">☑️</span> Görev Yönetimi</a></li>
+            <li class="nav-item"><a href="/quiz" class="nav-link"><span class="nav-icon">🧠</span> Quiz Yönetimi</a></li>
+            <li class="nav-item"><a href="/kaynaklar" class="nav-link"><span class="nav-icon">📚</span> Kaynaklar</a></li>
+            <li class="nav-item"><a href="/ogrenciler" class="nav-link"><span class="nav-icon">👥</span> Öğrenciler</a></li>
+        </ul>
+        <div class="logout-section"><a href="/" class="logout-btn">↪ Çıkış Yap</a></div>
+    </aside>
+
+    <main class="main-content">
+        <div class="page-header">
+            <div>
+                <h1 class="page-title">Görev Yönetimi</h1>
+                <p class="page-subtitle">LGS ve YKS öğrencileri için konu bazlı görev oluştur.</p>
+            </div>
+            <button onclick="document.getElementById('gorevModal').style.display='block'" class="add-btn">+ Görev Ekle</button>
+        </div>
+
+        <div class="filter-container">
+            <div class="filter-btn active">Tümü <span class="filter-badge">{{ gorevler|length }}</span></div>
+            <div class="filter-btn">LGS <span class="filter-badge" style="background:#f3f4f6; color:gray;">0</span></div>
+            <div class="filter-btn">YKS <span class="filter-badge" style="background:#f3f4f6; color:gray;">0</span></div>
+            <div class="filter-btn">Genel <span class="filter-badge" style="background:#f3f4f6; color:gray;">0</span></div>
+        </div>
+
+        {% if gorevler|length == 0 %}
+            <div style="text-align:center; padding:40px; color:#6b7280; border:1px dashed #d1d5db; border-radius:12px;">
+                Henüz hiç görev oluşturmadın. Sağ üstten "Görev Ekle" butonuna basarak başlayabilirsin.
+            </div>
+        {% else %}
+            {% for gorev in gorevler %}
+            <div class="task-card">
+                <div class="task-tags">
+                    {% if gorev.sinav_turu == 'YKS' %}
+                        <span class="tag-exam tag-yks">{{ gorev.sinav_turu }}</span>
+                    {% elif gorev.sinav_turu == 'LGS' %}
+                        <span class="tag-exam tag-lgs">{{ gorev.sinav_turu }}</span>
+                    {% else %}
+                        <span class="tag-exam tag-genel">{{ gorev.sinav_turu }}</span>
+                    {% endif %}
+                    
+                    <span class="tag-subject">📖 {{ gorev.ders }}</span>
+                </div>
+                <h3 class="task-title">{{ gorev.baslik }}</h3>
+                <p class="task-desc">{{ gorev.aciklama }}</p>
+                
+                <div class="task-footer">
+                    <span class="priority pri-{{ gorev.oncelik }}">{{ gorev.oncelik }}</span>
+                    <span class="task-date">📅 {{ gorev.son_tarih }}</span>
+                </div>
+            </div>
+            {% endfor %}
+        {% endif %}
+
+    </main>
+
+    <div id="gorevModal" class="modal-overlay">
+        <div class="modal-box">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                <h2 style="font-size:20px; color:#111827;">Yeni Görev</h2>
+                <button onclick="document.getElementById('gorevModal').style.display='none'" style="border:none; background:none; font-size:24px; cursor:pointer; color:#6b7280;">&times;</button>
+            </div>
+            
+            <form action="/add-task" method="POST">
+                <div class="form-group">
+                    <label>Sınav Türü</label>
+                    <select name="sinav_turu" class="form-control" style="background:#f8f9fc;">
+                        <option value="Genel">📚 Genel</option>
+                        <option value="YKS">🎓 YKS</option>
+                        <option value="LGS">🏫 LGS</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>Ders</label>
+                    <select name="ders" class="form-control">
+                        <option value="Ders seç" disabled selected>Ders seç</option>
+                        <option value="TYT Türkçe">TYT Türkçe</option>
+                        <option value="TYT Matematik">TYT Matematik</option>
+                        <option value="TYT Tarih">TYT Tarih</option>
+                        <option value="Fen Bilimleri">Fen Bilimleri</option>
+                        <option value="Sosyal Bilgiler">Sosyal Bilgiler</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Görev Başlığı</label>
+                    <input type="text" name="baslik" class="form-control" placeholder="Görev başlığı..." required>
+                </div>
+
+                <div class="form-group">
+                    <label>Açıklama (opsiyonel)</label>
+                    <textarea name="aciklama" class="form-control" placeholder="Görev açıklaması, soru numaraları, vb..." style="height:80px; resize:none;"></textarea>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Son Tarih</label>
+                        <input type="date" name="son_tarih" class="form-control" value="2026-06-27" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Öncelik</label>
+                        <select name="oncelik" class="form-control">
+                            <option value="Düşük">Düşük</option>
+                            <option value="Orta" selected>Orta</option>
+                            <option value="Yüksek">Yüksek</option>
+                        </select>
+                    </div>
+                </div>
+
+                <button type="submit" class="add-btn" style="width:100%; padding:12px; font-size:15px; margin-top:10px;">Görev Ekle</button>
+            </form>
+        </div>
+    </div>
+
+</body>
+</html>
