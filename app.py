@@ -3,9 +3,10 @@ import requests
 
 app = Flask(__name__)
 
-# Firebase REST API Linklerimiz (Şimşek hızında bağlantı)
+# Firebase REST API Linklerimiz
 FIREBASE_USER_URL = "https://firestore.googleapis.com/v1/projects/edaakedemi-a9543/databases/(default)/documents/kullanicilar"
 FIREBASE_EVENT_URL = "https://firestore.googleapis.com/v1/projects/edaakedemi-a9543/databases/(default)/documents/etkinlikler"
+FIREBASE_TASK_URL = "https://firestore.googleapis.com/v1/projects/edaakedemi-a9543/databases/(default)/documents/gorevler"
 
 @app.route('/')
 def index():
@@ -43,11 +44,8 @@ def login():
                 return "<h1>Öğrenci Paneli henüz yapım aşamasında...</h1>"
         else:
             return "<h1>Hata: Kullanıcı adı veya şifre yanlış! Lütfen tekrar deneyin.</h1>"
-            
     except Exception as e:
         return f"Sistem Hatası: {e}"
-
-# --- SAYFA ROTALARI ---
 
 @app.route('/ogretmen')
 def ogretmen_paneli():
@@ -57,13 +55,11 @@ def ogretmen_paneli():
 def ogrenciler():
     return render_template('ogrenciler.html')
 
-# VERİLERİ FIREBASE'DEN OKUYAN GELİŞMİŞ TAKVİM ROTASI
 @app.route('/takvim')
 def takvim():
     try:
         cevap = requests.get(FIREBASE_EVENT_URL)
         etkinlikler = []
-        
         if cevap.status_code == 200:
             veriler = cevap.json().get('documents', [])
             for doc in veriler:
@@ -74,10 +70,33 @@ def takvim():
                     "tarih": alanlar.get('tarih', {}).get('stringValue', ''),
                     "tur": alanlar.get('tur', {}).get('stringValue', '')
                 })
-        
         return render_template('takvim.html', etkinlikler=etkinlikler)
-    except Exception as e:
+    except Exception:
         return render_template('takvim.html', etkinlikler=[])
+
+# --- YENİ EKLENEN: GÖREVLERİ OKUMA ---
+@app.route('/gorev')
+def gorev():
+    try:
+        cevap = requests.get(FIREBASE_TASK_URL)
+        gorevler = []
+        if cevap.status_code == 200:
+            veriler = cevap.json().get('documents', [])
+            for doc in veriler:
+                alanlar = doc.get('fields', {})
+                gorevler.append({
+                    "sinav_turu": alanlar.get('sinav_turu', {}).get('stringValue', ''),
+                    "ders": alanlar.get('ders', {}).get('stringValue', ''),
+                    "baslik": alanlar.get('baslik', {}).get('stringValue', ''),
+                    "aciklama": alanlar.get('aciklama', {}).get('stringValue', ''),
+                    "son_tarih": alanlar.get('son_tarih', {}).get('stringValue', ''),
+                    "oncelik": alanlar.get('oncelik', {}).get('stringValue', '')
+                })
+        # Görevleri eklenme sırasına göre ters çevir (en yeni en üstte)
+        gorevler.reverse()
+        return render_template('gorev.html', gorevler=gorevler)
+    except Exception:
+        return render_template('gorev.html', gorevler=[])
 
 @app.route('/kaynaklar')
 def kaynaklar():
@@ -87,35 +106,34 @@ def kaynaklar():
 def quiz():
     return render_template('quiz.html')
 
-@app.route('/gorev')
-def gorev():
-    return render_template('gorev.html')
-
-# VERİTABANINA YENİ ETKİNLİK EKLEME ROTASI
 @app.route('/add-event', methods=['POST'])
 def add_event():
-    baslik = request.form.get('baslik')
-    aciklama = request.form.get('aciklama')
-    tarih = request.form.get('tarih')
-    tur = request.form.get('tur')
-
     payload = {
         "fields": {
-            "baslik": {"stringValue": baslik},
-            "aciklama": {"stringValue": aciklama if aciklama else ""},
-            "tarih": {"stringValue": tarih},
-            "tur": {"stringValue": tur}
+            "baslik": {"stringValue": request.form.get('baslik')},
+            "aciklama": {"stringValue": request.form.get('aciklama', '')},
+            "tarih": {"stringValue": request.form.get('tarih')},
+            "tur": {"stringValue": request.form.get('tur')}
         }
     }
+    requests.post(FIREBASE_EVENT_URL, json=payload)
+    return redirect(url_for('takvim'))
 
-    try:
-        cevap = requests.post(FIREBASE_EVENT_URL, json=payload)
-        if cevap.status_code == 200 or cevap.status_code == 201:
-            return redirect(url_for('takvim'))
-        else:
-            return f"<h1>Firebase Kayıt Hatası: {cevap.text}</h1>"
-    except Exception as e:
-        return f"Sistem Hatası: {e}"
+# --- YENİ EKLENEN: GÖREV KAYDETME ROTASI ---
+@app.route('/add-task', methods=['POST'])
+def add_task():
+    payload = {
+        "fields": {
+            "sinav_turu": {"stringValue": request.form.get('sinav_turu')},
+            "ders": {"stringValue": request.form.get('ders')},
+            "baslik": {"stringValue": request.form.get('baslik')},
+            "aciklama": {"stringValue": request.form.get('aciklama', '')},
+            "son_tarih": {"stringValue": request.form.get('son_tarih')},
+            "oncelik": {"stringValue": request.form.get('oncelik')}
+        }
+    }
+    requests.post(FIREBASE_TASK_URL, json=payload)
+    return redirect(url_for('gorev'))
 
 if __name__ == '__main__':
     app.run(debug=True)
