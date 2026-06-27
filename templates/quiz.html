@@ -51,6 +51,12 @@
         .q-count { color: #6b7280; font-size: 13px; display: flex; align-items: center; gap: 5px; }
         .trash-icon { position: absolute; right: 20px; top: 20px; color: #9ca3af; font-size: 18px; }
         .arrow-icon { position: absolute; right: 45px; top: 20px; color: #9ca3af; font-size: 18px; }
+        <!-- Quiz kartının içindeki butonlar kısmına bunu ekle -->
+<div style="margin-top:15px; display:flex; gap:10px;">
+    <button class="btn-purple" onclick="soruEkle('{{ q.id }}')">+ Soru Ekle</button>
+    <!-- YENİ BUTON -->
+    <a href="/quiz_sonuclari/{{ q.id }}" style="text-decoration:none; background:#10b981; color:white; padding:10px 20px; border-radius:8px; font-size:14px; font-weight:bold;">Çözenler</a>
+</div>
 
         /* Sağ: Editör Alanı & Soru Kartları */
         .empty-editor { background: white; border-radius: 16px; border: 1px solid #e5e7eb; height: 300px; display: flex; flex-direction: column; justify-content: center; align-items: center; color: #6b7280; font-size: 16px; }
