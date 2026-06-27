@@ -3,11 +3,13 @@ import requests
 
 app = Flask(__name__)
 
-# Firebase REST API Linki (En hafif ve en hızlı bağlantı)
-FIREBASE_URL = "https://firestore.googleapis.com/v1/projects/edaakedemi-a9543/databases/(default)/documents/kullanicilar"
+# Firebase REST API Linklerimiz (Sunucuyu yormayan şimşek hızında bağlantı)
+FIREBASE_USER_URL = "https://firestore.googleapis.com/v1/projects/edaakedemi-a9543/databases/(default)/documents/kullanicilar"
+FIREBASE_EVENT_URL = "https://firestore.googleapis.com/v1/projects/edaakedemi-a9543/databases/(default)/documents/etkinlikler"
 
 @app.route('/')
 def index():
+    # Temiz giriş ekranını açar
     return render_template('index.html')
 
 @app.route('/login', methods=['POST'])
@@ -16,7 +18,7 @@ def login():
     sifre = request.form.get('password')
 
     try:
-        cevap = requests.get(FIREBASE_URL)
+        cevap = requests.get(FIREBASE_USER_URL)
         if cevap.status_code != 200:
             return "<h1>Hata: Veritabanına ulaşılamadı.</h1>"
             
@@ -41,11 +43,13 @@ def login():
             else:
                 return "<h1>Öğrenci Paneli henüz yapım aşamasında...</h1>"
         else:
-            return "<h1>Hata: Kullanıcı adı veya şifre yanlış!</h1>"
+            return "<h1>Hata: Kullanıcı adı veya şifre yanlış! Lütfen tekrar deneyin.</h1>"
+            
     except Exception as e:
         return f"Sistem Hatası: {e}"
 
-# --- YENİ EKLENEN SAYFA ADRESLERİ ---
+# --- SAYFA ROTALARI ---
+
 @app.route('/ogretmen')
 def ogretmen_paneli():
     return render_template('ogretmen.html')
@@ -53,6 +57,10 @@ def ogretmen_paneli():
 @app.route('/ogrenciler')
 def ogrenciler():
     return render_template('ogrenciler.html')
+
+@app.route('/takvim')
+def takvim():
+    return render_template('takvim.html')
 
 @app.route('/kaynaklar')
 def kaynaklar():
@@ -66,8 +74,33 @@ def quiz():
 def gorev():
     return render_template('gorev.html')
 
-@app.route('/takvim')
-def takvim():
-    return render_template('takvim.html')
+# --- VERİTABANINA ETKİNLİK KAYDETME FONKSİYONU ---
+@app.route('/add-event', methods=['POST'])
+def add_event():
+    baslik = request.form.get('baslik')
+    aciklama = request.form.get('aciklama')
+    tarih = request.form.get('tarih')
+    tur = request.form.get('tur')
+
+    # Firebase'e gönderilecek paket düzeni
+    payload = {
+        "fields": {
+            "baslik": {"stringValue": baslik},
+            "aciklama": {"stringValue": aciklama if aciklama else ""},
+            "tarih": {"stringValue": tarih},
+            "tur": {"stringValue": tur}
+        }
+    }
+
+    try:
+        cevap = requests.post(FIREBASE_EVENT_URL, json=payload)
+        if cevap.status_code == 200 or cevap.status_code == 201:
+            # Başarılıysa takvimi yenilemek için sayfaya geri fırlatır
+            return redirect(url_for('takvim'))
+        else:
+            return f"<h1>Firebase Kayıt Hatası: {cevap.text}</h1>"
+    except Exception as e:
+        return f"Sistem Hatası: {e}"
+
 if __name__ == '__main__':
     app.run(debug=True)
