@@ -4,6 +4,7 @@ import requests
 app = Flask(__name__)
 app.secret_key = "eda_akademi_super_gizli_anahtar"
 
+# --- FİREBASE BAĞLANTILARI ---
 FIREBASE_USER_URL = "https://firestore.googleapis.com/v1/projects/edaakedemi-a9543/databases/(default)/documents/kullanicilar"
 FIREBASE_EVENT_URL = "https://firestore.googleapis.com/v1/projects/edaakedemi-a9543/databases/(default)/documents/etkinlikler"
 FIREBASE_TASK_URL = "https://firestore.googleapis.com/v1/projects/edaakedemi-a9543/databases/(default)/documents/gorevler"
@@ -42,21 +43,19 @@ def logout():
     session.clear()
     return redirect(url_for('index'))
 
-# ==================== ÖĞRETMEN ROTALARI ====================
+
+# =========================================================================
+# ÖĞRETMEN PANELİ ROTALARI
+# =========================================================================
+
 @app.route('/ogretmen')
 def ogretmen_paneli():
     if session.get('rol') != 'ogretmen': return redirect(url_for('index'))
-    
-    toplam_gorev = 0
-    aktif_puan = 0
-    tamamlanma_orani = 0
+    toplam_gorev, aktif_puan, tamamlanma_orani = 0, 0, 0
     try:
-        # Toplam verilen görev sayısını bul
         res_task = requests.get(FIREBASE_TASK_URL)
-        if res_task.status_code == 200:
-            toplam_gorev = len(res_task.json().get('documents', []))
-            
-        # Toplam öğrenci puanlarını hesapla
+        if res_task.status_code == 200: toplam_gorev = len(res_task.json().get('documents', []))
+        
         res_user = requests.get(FIREBASE_USER_URL)
         if res_user.status_code == 200:
             ogrenci_sayisi = 0
@@ -67,55 +66,12 @@ def ogretmen_paneli():
                     p_val = fields.get('puan', {})
                     aktif_puan += int(p_val.get('integerValue', p_val.get('stringValue', '0')))
             
-            # Sınıfın genel tamamlanma oranını hesapla
             if toplam_gorev > 0 and ogrenci_sayisi > 0:
                 beklenen_puan = toplam_gorev * 10 * ogrenci_sayisi
                 tamamlanma_orani = int((aktif_puan / beklenen_puan) * 100) if beklenen_puan > 0 else 0
                 if tamamlanma_orani > 100: tamamlanma_orani = 100
-    except:
-        pass
-    return render_template('ogretmen.html', toplam_gorev=toplam_gorev, aktif_puan=aktif_puan, tamamlanma_orani=tamamlanma_orani)
-
-
-@app.route('/gorev')
-def gorev():
-    try:
-        cevap = requests.get(FIREBASE_TASK_URL)
-        gorevler = [{"sinav_turu": d.get('fields', {}).get('sinav_turu', {}).get('stringValue', ''), "ders": d.get('fields', {}).get('ders', {}).get('stringValue', ''), "baslik": d.get('fields', {}).get('baslik', {}).get('stringValue', ''), "aciklama": d.get('fields', {}).get('aciklama', {}).get('stringValue', ''), "son_tarih": d.get('fields', {}).get('son_tarih', {}).get('stringValue', ''), "oncelik": d.get('fields', {}).get('oncelik', {}).get('stringValue', '')} for d in cevap.json().get('documents', [])] if cevap.status_code == 200 else []
-        gorevler.reverse(); return render_template('gorev.html', gorevler=gorevler)
-    except: return render_template('gorev.html', gorevler=[])
-@app.route('/quiz')
-def quiz():
-    quizler, sorular = [], []
-    try:
-        res_q = requests.get(FIREBASE_QUIZ_URL)
-        if res_q.status_code == 200: quizler = [{"id": d.get('name', '').split('/')[-1], "baslik": d.get('fields', {}).get('baslik', {}).get('stringValue', ''), "hafta": d.get('fields', {}).get('hafta', {}).get('stringValue', ''), "sinav_turu": d.get('fields', {}).get('sinav_turu', {}).get('stringValue', ''), "aciklama": d.get('fields', {}).get('aciklama', {}).get('stringValue', '')} for d in res_q.json().get('documents', [])]
-        quizler.reverse()
-        res_s = requests.get(FIREBASE_QUESTION_URL)
-        if res_s.status_code == 200: sorular = [{"quiz_id": d.get('fields', {}).get('quiz_id', {}).get('stringValue', ''), "soru_metni": d.get('fields', {}).get('soru_metni', {}).get('stringValue', ''), "a": d.get('fields', {}).get('a', {}).get('stringValue', ''), "b": d.get('fields', {}).get('b', {}).get('stringValue', ''), "c": d.get('fields', {}).get('c', {}).get('stringValue', ''), "d": d.get('fields', {}).get('d', {}).get('stringValue', ''), "dogru": d.get('fields', {}).get('dogru', {}).get('stringValue', ''), "cozum": d.get('fields', {}).get('cozum', {}).get('stringValue', '')} for d in res_s.json().get('documents', [])]
     except: pass
-    return render_template('quiz.html', quizler=quizler, sorular=sorular)
-@app.route('/kaynaklar')
-def kaynaklar():
-    try:
-        cevap = requests.get(FIREBASE_RESOURCE_URL)
-        k_list = [{"baslik": d.get('fields', {}).get('baslik', {}).get('stringValue', ''), "aciklama": d.get('fields', {}).get('aciklama', {}).get('stringValue', ''), "tur": d.get('fields', {}).get('tur', {}).get('stringValue', ''), "url": d.get('fields', {}).get('url', {}).get('stringValue', '')} for d in cevap.json().get('documents', [])] if cevap.status_code == 200 else []
-        k_list.reverse(); return render_template('kaynaklar.html', kaynaklar=k_list)
-    except: return render_template('kaynaklar.html', kaynaklar=[])
-
-@app.route('/add-event', methods=['POST'])
-def add_event(): requests.post(FIREBASE_EVENT_URL, json={"fields": {"baslik": {"stringValue": request.form.get('baslik')}, "aciklama": {"stringValue": request.form.get('aciklama', '')}, "tarih": {"stringValue": request.form.get('tarih')}, "tur": {"stringValue": request.form.get('tur')}}}); return redirect(url_for('takvim'))
-@app.route('/add-task', methods=['POST'])
-def add_task(): requests.post(FIREBASE_TASK_URL, json={"fields": {"sinav_turu": {"stringValue": request.form.get('sinav_turu')}, "ders": {"stringValue": request.form.get('ders')}, "baslik": {"stringValue": request.form.get('baslik')}, "aciklama": {"stringValue": request.form.get('aciklama', '')}, "son_tarih": {"stringValue": request.form.get('son_tarih')}, "oncelik": {"stringValue": request.form.get('oncelik')}}}); return redirect(url_for('gorev'))
-@app.route('/add-quiz', methods=['POST'])
-def add_quiz(): requests.post(FIREBASE_QUIZ_URL, json={"fields": {"baslik": {"stringValue": request.form.get('baslik')}, "hafta": {"stringValue": request.form.get('hafta')}, "sinav_turu": {"stringValue": request.form.get('sinav_turu')}, "aciklama": {"stringValue": request.form.get('aciklama', '')}}}); return redirect(url_for('quiz'))
-@app.route('/add-question', methods=['POST'])
-def add_question(): requests.post(FIREBASE_QUESTION_URL, json={"fields": {"quiz_id": {"stringValue": request.form.get('quiz_id')}, "soru_metni": {"stringValue": request.form.get('soru_metni')}, "a": {"stringValue": request.form.get('a')}, "b": {"stringValue": request.form.get('b')}, "c": {"stringValue": request.form.get('c')}, "d": {"stringValue": request.form.get('d')}, "dogru": {"stringValue": request.form.get('dogru')}, "cozum": {"stringValue": request.form.get('cozum', '')}}}); return redirect(url_for('quiz'))
-@app.route('/add-resource', methods=['POST'])
-def add_resource(): requests.post(FIREBASE_RESOURCE_URL, json={"fields": {"baslik": {"stringValue": request.form.get('baslik')}, "aciklama": {"stringValue": request.form.get('aciklama', '')}, "tur": {"stringValue": request.form.get('tur')}, "url": {"stringValue": request.form.get('url')}}}); return redirect(url_for('kaynaklar'))
-
-
-# ==================== ÖĞRENCİ ROTALARI ====================
+    return render_template('ogretmen.html', toplam_gorev=toplam_gorev, aktif_puan=aktif_puan, tamamlanma_orani=tamamlanma_orani)
 
 @app.route('/ogrenciler')
 def ogrenciler():
@@ -129,38 +85,92 @@ def ogrenciler():
                 if alanlar.get('rol', {}).get('stringValue') == 'ogrenci':
                     puan_val = alanlar.get('puan', {})
                     puan = int(puan_val.get('integerValue', puan_val.get('stringValue', '0')))
-                    # Her 10 puan 1 tamamlanmış görev/test kabul ediliyor
                     tamamlanan = puan // 10 
-                    
-                    ogrenci_listesi.append({
-                        "isim": alanlar.get('isim', {}).get('stringValue', 'Öğrenci'),
-                        "kullanici_adi": alanlar.get('kullanici_adi', {}).get('stringValue', ''),
-                        "puan": puan,
-                        "tamamlanan": tamamlanan
-                    })
+                    ogrenci_listesi.append({"isim": alanlar.get('isim', {}).get('stringValue', 'Öğrenci'), "kullanici_adi": alanlar.get('kullanici_adi', {}).get('stringValue', ''), "puan": puan, "tamamlanan": tamamlanan})
         
-        # Puanlara göre sırala ve özet istatistikleri çıkar
         ogrenci_listesi = sorted(ogrenci_listesi, key=lambda x: x['puan'], reverse=True)
         toplam_ogrenci = len(ogrenci_listesi)
         en_yuksek_puan = ogrenci_listesi[0]['puan'] if toplam_ogrenci > 0 else 0
         toplam_tamamlanan = sum(o['tamamlanan'] for o in ogrenci_listesi)
-        
         return render_template('ogrenciler.html', ogrenciler=ogrenci_listesi, toplam_ogrenci=toplam_ogrenci, en_yuksek_puan=en_yuksek_puan, toplam_tamamlanan=toplam_tamamlanan)
-    except:
-        return render_template('ogrenciler.html', ogrenciler=[], toplam_ogrenci=0, en_yuksek_puan=0, toplam_tamamlanan=0)
+    except: return render_template('ogrenciler.html', ogrenciler=[], toplam_ogrenci=0, en_yuksek_puan=0, toplam_tamamlanan=0)
+
+# İŞTE EKSİK OLAN TAKVİM ROTASI BURADA!
+@app.route('/takvim')
+def takvim():
+    try:
+        cevap = requests.get(FIREBASE_EVENT_URL)
+        etkinlikler = [{"baslik": d.get('fields', {}).get('baslik', {}).get('stringValue', ''), "aciklama": d.get('fields', {}).get('aciklama', {}).get('stringValue', ''), "tarih": d.get('fields', {}).get('tarih', {}).get('stringValue', ''), "tur": d.get('fields', {}).get('tur', {}).get('stringValue', '')} for d in cevap.json().get('documents', [])] if cevap.status_code == 200 else []
+        return render_template('takvim.html', etkinlikler=etkinlikler)
+    except: return render_template('takvim.html', etkinlikler=[])
+
+@app.route('/gorev')
+def gorev():
+    try:
+        cevap = requests.get(FIREBASE_TASK_URL)
+        gorevler = [{"sinav_turu": d.get('fields', {}).get('sinav_turu', {}).get('stringValue', ''), "ders": d.get('fields', {}).get('ders', {}).get('stringValue', ''), "baslik": d.get('fields', {}).get('baslik', {}).get('stringValue', ''), "aciklama": d.get('fields', {}).get('aciklama', {}).get('stringValue', ''), "son_tarih": d.get('fields', {}).get('son_tarih', {}).get('stringValue', ''), "oncelik": d.get('fields', {}).get('oncelik', {}).get('stringValue', '')} for d in cevap.json().get('documents', [])] if cevap.status_code == 200 else []
+        gorevler.reverse()
+        return render_template('gorev.html', gorevler=gorevler)
+    except: return render_template('gorev.html', gorevler=[])
+
+@app.route('/quiz')
+def quiz():
+    quizler, sorular = [], []
+    try:
+        res_q = requests.get(FIREBASE_QUIZ_URL)
+        if res_q.status_code == 200: quizler = [{"id": d.get('name', '').split('/')[-1], "baslik": d.get('fields', {}).get('baslik', {}).get('stringValue', ''), "hafta": d.get('fields', {}).get('hafta', {}).get('stringValue', ''), "sinav_turu": d.get('fields', {}).get('sinav_turu', {}).get('stringValue', ''), "aciklama": d.get('fields', {}).get('aciklama', {}).get('stringValue', '')} for d in res_q.json().get('documents', [])]
+        quizler.reverse()
+        res_s = requests.get(FIREBASE_QUESTION_URL)
+        if res_s.status_code == 200: sorular = [{"quiz_id": d.get('fields', {}).get('quiz_id', {}).get('stringValue', ''), "soru_metni": d.get('fields', {}).get('soru_metni', {}).get('stringValue', ''), "a": d.get('fields', {}).get('a', {}).get('stringValue', ''), "b": d.get('fields', {}).get('b', {}).get('stringValue', ''), "c": d.get('fields', {}).get('c', {}).get('stringValue', ''), "d": d.get('fields', {}).get('d', {}).get('stringValue', ''), "dogru": d.get('fields', {}).get('dogru', {}).get('stringValue', ''), "cozum": d.get('fields', {}).get('cozum', {}).get('stringValue', '')} for d in res_s.json().get('documents', [])]
+    except: pass
+    return render_template('quiz.html', quizler=quizler, sorular=sorular)
+
+@app.route('/kaynaklar')
+def kaynaklar():
+    try:
+        cevap = requests.get(FIREBASE_RESOURCE_URL)
+        k_list = [{"baslik": d.get('fields', {}).get('baslik', {}).get('stringValue', ''), "aciklama": d.get('fields', {}).get('aciklama', {}).get('stringValue', ''), "tur": d.get('fields', {}).get('tur', {}).get('stringValue', ''), "url": d.get('fields', {}).get('url', {}).get('stringValue', '')} for d in cevap.json().get('documents', [])] if cevap.status_code == 200 else []
+        k_list.reverse()
+        return render_template('kaynaklar.html', kaynaklar=k_list)
+    except: return render_template('kaynaklar.html', kaynaklar=[])
+
+# --- ÖĞRETMEN VERİ EKLEME POST İŞLEMLERİ ---
+@app.route('/add-event', methods=['POST'])
+def add_event(): requests.post(FIREBASE_EVENT_URL, json={"fields": {"baslik": {"stringValue": request.form.get('baslik')}, "aciklama": {"stringValue": request.form.get('aciklama', '')}, "tarih": {"stringValue": request.form.get('tarih')}, "tur": {"stringValue": request.form.get('tur')}}}); return redirect(url_for('takvim'))
+@app.route('/add-task', methods=['POST'])
+def add_task(): requests.post(FIREBASE_TASK_URL, json={"fields": {"sinav_turu": {"stringValue": request.form.get('sinav_turu')}, "ders": {"stringValue": request.form.get('ders')}, "baslik": {"stringValue": request.form.get('baslik')}, "aciklama": {"stringValue": request.form.get('aciklama', '')}, "son_tarih": {"stringValue": request.form.get('son_tarih')}, "oncelik": {"stringValue": request.form.get('oncelik')}}}); return redirect(url_for('gorev'))
+@app.route('/add-quiz', methods=['POST'])
+def add_quiz(): requests.post(FIREBASE_QUIZ_URL, json={"fields": {"baslik": {"stringValue": request.form.get('baslik')}, "hafta": {"stringValue": request.form.get('hafta')}, "sinav_turu": {"stringValue": request.form.get('sinav_turu')}, "aciklama": {"stringValue": request.form.get('aciklama', '')}}}); return redirect(url_for('quiz'))
+@app.route('/add-question', methods=['POST'])
+def add_question(): requests.post(FIREBASE_QUESTION_URL, json={"fields": {"quiz_id": {"stringValue": request.form.get('quiz_id')}, "soru_metni": {"stringValue": request.form.get('soru_metni')}, "a": {"stringValue": request.form.get('a')}, "b": {"stringValue": request.form.get('b')}, "c": {"stringValue": request.form.get('c')}, "d": {"stringValue": request.form.get('d')}, "dogru": {"stringValue": request.form.get('dogru')}, "cozum": {"stringValue": request.form.get('cozum', '')}}}); return redirect(url_for('quiz'))
+@app.route('/add-resource', methods=['POST'])
+def add_resource(): requests.post(FIREBASE_RESOURCE_URL, json={"fields": {"baslik": {"stringValue": request.form.get('baslik')}, "aciklama": {"stringValue": request.form.get('aciklama', '')}, "tur": {"stringValue": request.form.get('tur')}, "url": {"stringValue": request.form.get('url')}}}); return redirect(url_for('kaynaklar'))
+
+
+# =========================================================================
+# ÖĞRENCİ PANELİ ROTALARI
+# =========================================================================
+
+@app.route('/ogrenci')
+def ogrenci_dashboard(): return render_template('ogrenci_dashboard.html') if session.get('rol') == 'ogrenci' else redirect(url_for('index'))
+
+@app.route('/ogrenci_takvim')
 def ogrenci_takvim():
     try:
         cevap = requests.get(FIREBASE_EVENT_URL)
         etkinlikler = [{"baslik": d.get('fields', {}).get('baslik', {}).get('stringValue', ''), "aciklama": d.get('fields', {}).get('aciklama', {}).get('stringValue', ''), "tarih": d.get('fields', {}).get('tarih', {}).get('stringValue', ''), "tur": d.get('fields', {}).get('tur', {}).get('stringValue', '')} for d in cevap.json().get('documents', [])] if cevap.status_code == 200 else []
         return render_template('ogrenci_takvim.html', etkinlikler=etkinlikler)
     except: return render_template('ogrenci_takvim.html', etkinlikler=[])
+
 @app.route('/ogrenci_gorevler')
 def ogrenci_gorevler():
     try:
         cevap = requests.get(FIREBASE_TASK_URL)
         gorevler = [{"id": d.get('name', '').split('/')[-1], "sinav_turu": d.get('fields', {}).get('sinav_turu', {}).get('stringValue', ''), "ders": d.get('fields', {}).get('ders', {}).get('stringValue', ''), "baslik": d.get('fields', {}).get('baslik', {}).get('stringValue', ''), "aciklama": d.get('fields', {}).get('aciklama', {}).get('stringValue', ''), "son_tarih": d.get('fields', {}).get('son_tarih', {}).get('stringValue', ''), "oncelik": d.get('fields', {}).get('oncelik', {}).get('stringValue', '')} for d in cevap.json().get('documents', [])] if cevap.status_code == 200 else []
-        gorevler.reverse(); return render_template('ogrenci_gorevler.html', gorevler=gorevler)
+        gorevler.reverse()
+        return render_template('ogrenci_gorevler.html', gorevler=gorevler)
     except: return render_template('ogrenci_gorevler.html', gorevler=[])
+
 @app.route('/ogrenci_testler')
 def ogrenci_testler():
     quizler, sorular = [], []
@@ -171,13 +181,16 @@ def ogrenci_testler():
         if res_s.status_code == 200: sorular = [{"quiz_id": d.get('fields', {}).get('quiz_id', {}).get('stringValue', ''), "soru_metni": d.get('fields', {}).get('soru_metni', {}).get('stringValue', ''), "a": d.get('fields', {}).get('a', {}).get('stringValue', ''), "b": d.get('fields', {}).get('b', {}).get('stringValue', ''), "c": d.get('fields', {}).get('c', {}).get('stringValue', ''), "d": d.get('fields', {}).get('d', {}).get('stringValue', ''), "dogru": d.get('fields', {}).get('dogru', {}).get('stringValue', ''), "cozum": d.get('fields', {}).get('cozum', {}).get('stringValue', '')} for d in res_s.json().get('documents', [])]
     except: pass
     return render_template('ogrenci_testler.html', quizler=quizler, sorular=sorular)
+
 @app.route('/ogrenci_kaynaklar')
 def ogrenci_kaynaklar():
     try:
         cevap = requests.get(FIREBASE_RESOURCE_URL)
         k_list = [{"baslik": d.get('fields', {}).get('baslik', {}).get('stringValue', ''), "aciklama": d.get('fields', {}).get('aciklama', {}).get('stringValue', ''), "tur": d.get('fields', {}).get('tur', {}).get('stringValue', ''), "url": d.get('fields', {}).get('url', {}).get('stringValue', '')} for d in cevap.json().get('documents', [])] if cevap.status_code == 200 else []
-        k_list.reverse(); return render_template('ogrenci_kaynaklar.html', kaynaklar=k_list)
+        k_list.reverse()
+        return render_template('ogrenci_kaynaklar.html', kaynaklar=k_list)
     except: return render_template('ogrenci_kaynaklar.html', kaynaklar=[])
+
 @app.route('/ogrenci_siralama')
 def ogrenci_siralama():
     try:
@@ -186,36 +199,24 @@ def ogrenci_siralama():
         return render_template('ogrenci_siralama.html', ogrenciler=sorted(ogrenciler, key=lambda x: x['puan'], reverse=True))
     except: return render_template('ogrenci_siralama.html', ogrenciler=[])
 
-
-# --- YENİ: ANLIK PUAN EKLEME ROTASI ---
 @app.route('/puan_ekle', methods=['POST'])
 def puan_ekle():
     if session.get('rol') != 'ogrenci': return {"status": "error"}
-    
     kazanilan_puan = int(request.json.get('puan', 0))
     kullanici_adi = session.get('kullanici_adi')
-    
     try:
         res = requests.get(FIREBASE_USER_URL)
         if res.status_code == 200:
             for doc in res.json().get('documents', []):
                 fields = doc.get('fields', {})
                 if fields.get('kullanici_adi', {}).get('stringValue') == kullanici_adi:
-                    # Öğrencinin ID'sini ve Mevcut Puanını bul
                     doc_id = doc.get('name', '').split('/')[-1]
                     puan_val = fields.get('puan', {})
                     mevcut_puan = int(puan_val.get('integerValue', puan_val.get('stringValue', '0')))
-                    
                     yeni_puan = mevcut_puan + kazanilan_puan
-                    
-                    # Veritabanında SADECE Puan hücresini güncelle (Diğer bilgiler silinmez)
-                    update_url = f"{FIREBASE_USER_URL}/{doc_id}?updateMask.fieldPaths=puan"
-                    payload = {"fields": {"puan": {"integerValue": str(yeni_puan)}}}
-                    requests.patch(update_url, json=payload)
+                    requests.patch(f"{FIREBASE_USER_URL}/{doc_id}?updateMask.fieldPaths=puan", json={"fields": {"puan": {"integerValue": str(yeni_puan)}}})
                     return {"status": "success", "yeni_puan": yeni_puan}
-    except Exception as e:
-        print("Puan Hatasi:", e)
-        
+    except: pass
     return {"status": "error"}
 
 if __name__ == '__main__':
