@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>Eda Akademi - Quiz Sonuçları</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #f8f9fc; padding: 40px; }
+        .card { background: white; padding: 30px; border-radius: 16px; border: 1px solid #e5e7eb; max-width: 800px; margin: auto; }
+        h1 { margin-bottom: 20px; color: #111827; }
+        .item { display: flex; justify-content: space-between; padding: 15px; border-bottom: 1px solid #f3f4f6; }
+        .btn-back { display: inline-block; margin-top: 20px; padding: 10px 20px; background: #7c3aed; color: white; text-decoration: none; border-radius: 8px; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>Sınavı Tamamlayan Öğrenciler</h1>
+        {% for o in ogrenciler %}
+        <div class="item">
+            <span>👤 {{ o.isim }}</span>
+            <span style="font-weight:bold; color:#7c3aed;">{{ o.puan }} Puan</span>
+        </div>
+        {% endfor %}
+        <a href="/quiz" class="btn-back">Geri Dön</a>
+    </div>
+</body>
+</html>
