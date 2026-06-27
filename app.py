@@ -217,6 +217,22 @@ def ogrenci_testler():
         if res_s.status_code == 200: sorular = [{"quiz_id": d.get('fields', {}).get('quiz_id', {}).get('stringValue', ''), "soru_metni": d.get('fields', {}).get('soru_metni', {}).get('stringValue', ''), "a": d.get('fields', {}).get('a', {}).get('stringValue', ''), "b": d.get('fields', {}).get('b', {}).get('stringValue', ''), "c": d.get('fields', {}).get('c', {}).get('stringValue', ''), "d": d.get('fields', {}).get('d', {}).get('stringValue', ''), "dogru": d.get('fields', {}).get('dogru', {}).get('stringValue', ''), "cozum": d.get('fields', {}).get('cozum', {}).get('stringValue', '')} for d in res_s.json().get('documents', [])]
     except: pass
     return render_template('ogrenci_testler.html', quizler=quizler, sorular=sorular)
+    @app.route('/quiz_sonuclari/<quiz_id>')
+def quiz_sonuclari(quiz_id):
+    if session.get('rol') != 'ogretmen': return redirect(url_for('index'))
+    # Basit bir mantıkla kullanıcıların toplam puanlarına veya quiz sonuçlarına bakabiliriz. 
+    # Şimdilik öğrencileri ve puanlarını listeleyerek öğretmen analizi sağlayalım.
+    cevap = requests.get(FIREBASE_USER_URL)
+    ogrenciler = []
+    if cevap.status_code == 200:
+        for doc in cevap.json().get('documents', []):
+            alanlar = doc.get('fields', {})
+            if alanlar.get('rol', {}).get('stringValue') == 'ogrenci':
+                ogrenciler.append({
+                    "isim": alanlar.get('isim', {}).get('stringValue', 'Öğrenci'),
+                    "puan": alanlar.get('puan', {}).get('integerValue', '0')
+                })
+    return render_template('quiz_sonuclari.html', ogrenciler=ogrenciler, quiz_id=quiz_id)
 @app.route('/ogrenci_kaynaklar')
 def ogrenci_kaynaklar():
     try:
