@@ -305,36 +305,29 @@ def ogrenci_kaynaklar():
     except:
         return render_template('ogrenci_kaynaklar.html', kaynaklar=[])
 
-@app.route('/ogrenci_siralama')
-def ogrenci_siralama():
-    if session.get('rol') != 'ogrenci': 
-        return redirect(url_for('index'))
+@app.route('/ogrenciler')
+def ogrenciler():
     try:
         cevap = requests.get(FIREBASE_USER_URL)
-        ogrenciler = []
+        ogrenci_listesi = []
         if cevap.status_code == 200:
             for doc in cevap.json().get('documents', []):
                 alanlar = doc.get('fields', {})
-                rol = alanlar.get('rol', {}).get('stringValue', '')
-                if rol == 'ogrenci':
-                    # Puan alanı Firestore'da integerValue veya stringValue olabilir, iki ihtimali de kontrol edelim
+                if alanlar.get('rol', {}).get('stringValue') == 'ogrenci':
+                    # Puanı güvenli bir şekilde al
                     puan_val = alanlar.get('puan', {})
-                    puan = 0
-                    if 'integerValue' in puan_val:
-                        puan = int(puan_val['integerValue'])
-                    elif 'stringValue' in puan_val:
-                        puan = int(puan_val['stringValue'])
+                    puan = int(puan_val.get('integerValue', puan_val.get('stringValue', '0')))
                     
-                    ogrenciler.append({
-                        "isim": alanlar.get('isim', {}).get('stringValue', 'Öğrenci'),
+                    ogrenci_listesi.append({
+                        "isim": alanlar.get('isim', {}).get('stringValue', 'İsimsiz Öğrenci'),
+                        "kullanici_adi": alanlar.get('kullanici_adi', {}).get('stringValue', ''),
                         "puan": puan
                     })
-        # Öğrencileri puanlarına göre yüksekten düşüğe doğru sırala
-        ogrenciler = sorted(ogrenciler, key=lambda x: x['puan'], reverse=True)
-        return render_template('ogrenci_siralama.html', ogrenciler=ogrenciler)
+        # Öğrencileri puana göre sırala
+        ogrenci_listesi = sorted(ogrenci_listesi, key=lambda x: x['puan'], reverse=True)
+        return render_template('ogrenciler.html', ogrenciler=ogrenci_listesi)
     except:
-        return render_template('ogrenci_siralama.html', ogrenciler=[])
-
+        return render_template('ogrenciler.html', ogrenciler=[])
 
 if __name__ == '__main__':
     app.run(debug=True)
