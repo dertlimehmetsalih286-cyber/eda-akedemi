@@ -123,8 +123,36 @@ def ogrenci_takvim():
         return render_template('ogrenci_takvim.html', etkinlikler=etkinlikler)
     except: return render_template('ogrenci_takvim.html', etkinlikler=[])
 
+# ... diğer kodların ...
+
+# Senin kodunu buraya yapıştırıyoruz:
 @app.route('/ogrenci_gorevler')
-def ogrenci_gorevler(): return "<h1 style='padding:50px; font-family:sans-serif;'>Görevler Sayfası Bir Sonraki Adımda Eklenecek...</h1>"
+def ogrenci_gorevler():
+    if session.get('rol') != 'ogrenci': return redirect(url_for('index'))
+    try:
+        cevap = requests.get(FIREBASE_TASK_URL)
+        gorevler = []
+        if cevap.status_code == 200:
+            for doc in cevap.json().get('documents', []):
+                alanlar = doc.get('fields', {})
+                g_id = doc.get('name', '').split('/')[-1] 
+                gorevler.append({
+                    "id": g_id,
+                    "sinav_turu": alanlar.get('sinav_turu', {}).get('stringValue', ''),
+                    "ders": alanlar.get('ders', {}).get('stringValue', ''),
+                    "baslik": alanlar.get('baslik', {}).get('stringValue', ''),
+                    "aciklama": alanlar.get('aciklama', {}).get('stringValue', ''),
+                    "son_tarih": alanlar.get('son_tarih', {}).get('stringValue', ''),
+                    "oncelik": alanlar.get('oncelik', {}).get('stringValue', '')
+                })
+        gorevler.reverse()
+        return render_template('ogrenci_gorevler.html', gorevler=gorevler)
+    except Exception:
+        return render_template('ogrenci_gorevler.html', gorevler=[])
+
+# En sonda bu satır olmalı:
+if __name__ == '__main__':
+    app.run(debug=True)
 
 @app.route('/ogrenci_testler')
 def ogrenci_testler(): return "<h1 style='padding:50px; font-family:sans-serif;'>Akıllı Testler Bir Sonraki Adımda Eklenecek...</h1>"
