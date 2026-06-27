@@ -1,14 +1,145 @@
-{% extends "base.html" %}
-{% block content %}
-<div style="display:flex; justify-content:space-between;">
-    <h1>📚 Kaynak Yönetimi</h1>
-    <button onclick="document.getElementById('km').style.display='block'" style="background:#7c3aed; color:white; border:none; padding:10px; border-radius:8px;">+ Kaynak Ekle</button>
-</div>
-<div id="km" class="modal">
-    <h3>Yeni Kaynak</h3>
-    <input type="text" placeholder="Başlık" style="width:100%; margin:5px 0;">
-    <select><option>Link</option><option>Dosya</option></select>
-    <input type="text" placeholder="https://" style="width:100%; margin:5px 0;">
-    <button onclick="document.getElementById('km').style.display='none'">Kaynak Ekle</button>
-</div>
-{% endblock %}
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eda Akademi - Kaynak Yönetimi</title>
+    <style>
+        /* Genel İskelet */
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { display: flex; min-height: 100vh; background-color: #f8f9fc; }
+        
+        /* Sabit Menü */
+        .sidebar { width: 260px; background-color: white; border-right: 1px solid #e5e7eb; display: flex; flex-direction: column; padding: 20px 0; position: fixed; height: 100vh; }
+        .logo-container { display: flex; align-items: center; padding: 0 20px 30px 20px; font-size: 22px; font-weight: bold; color: #111827; }
+        .logo-icon { background-color: #7c3aed; width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-right: 15px; }
+        .logo-icon svg { width: 24px; height: 24px; fill: white; }
+        .nav-links { list-style: none; flex-grow: 1; }
+        .nav-item { padding: 0 15px; margin-bottom: 5px; }
+        .nav-link { display: flex; align-items: center; padding: 12px 20px; text-decoration: none; color: #4b5563; font-weight: 500; border-radius: 8px; transition: all 0.2s; }
+        .nav-link:hover { background-color: #f3f4f6; color: #111827; }
+        .nav-link.active { background-color: #7c3aed; color: white; }
+        .nav-icon { margin-right: 15px; font-size: 18px; }
+        .logout-section { padding: 20px; border-top: 1px solid #e5e7eb; margin-top: auto; }
+        .logout-btn { color: #dc2626; text-decoration: none; font-size: 14px; font-weight: 500; display: flex; align-items: center; }
+        
+        /* İçerik Alanı */
+        .main-content { flex-grow: 1; padding: 40px; margin-left: 260px; max-width: 900px;}
+        .page-header { margin-bottom: 40px; display: flex; justify-content: space-between; align-items: center; }
+        .page-title { font-size: 28px; font-weight: bold; color: #111827; margin-bottom: 8px; }
+        .page-subtitle { color: #6b7280; font-size: 15px; }
+        .add-btn { background: #7c3aed; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 14px; }
+        
+        /* Kaynak Kartları */
+        .resource-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
+        .r-card { background: white; padding: 20px; border-radius: 12px; border: 1px solid #e5e7eb; display: flex; gap: 15px; transition: box-shadow 0.2s; }
+        .r-card:hover { box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .r-icon-box { background: #fae8ff; color: #c026d3; width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+        .r-icon-box.dosya { background: #e0e7ff; color: #4f46e5; }
+        .r-content { display: flex; flex-direction: column; width: 100%; overflow: hidden; }
+        .r-title { font-size: 16px; font-weight: 600; color: #111827; margin-bottom: 4px; }
+        .r-desc { font-size: 13px; color: #6b7280; margin-bottom: 8px; }
+        .r-link { font-size: 13px; color: #7c3aed; text-decoration: none; margin-bottom: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
+        .r-link:hover { text-decoration: underline; }
+        .r-badge { background: white; border: 1px solid #e5e7eb; padding: 3px 10px; border-radius: 15px; font-size: 12px; font-weight: 600; color: #4b5563; align-self: flex-start; }
+
+        /* Modal Stilleri */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); z-index: 1000; }
+        .modal-box { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 30px; border-radius: 16px; width: 450px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; font-size: 14px; font-weight: 500; color: #374151; }
+        .form-control { width: 100%; padding: 10px 12px; border: 1px solid #d1d5db; border-radius: 8px; outline: none; font-size: 14px; }
+        .form-control:focus { border-color: #7c3aed; }
+    </style>
+</head>
+<body>
+
+    <aside class="sidebar">
+        <div class="logo-container">
+            <div class="logo-icon">
+                <svg viewBox="0 0 24 24"><path d="M12 3L1 9l4 2.18v6L12 21l7-3.82v-6l2.81-1.53L12 3zm6.82 6L12 12.72 5.18 9 12 5.28 18.82 9zM17 15.99l-5 2.73-5-2.73v-3.72l5 2.73 5-2.73v3.72z"/></svg>
+            </div>
+            EduBoard
+        </div>
+        <ul class="nav-links">
+            <li class="nav-item"><a href="/ogretmen" class="nav-link"><span class="nav-icon">⊞</span> Dashboard</a></li>
+            <li class="nav-item"><a href="/takvim" class="nav-link"><span class="nav-icon">📅</span> Takvim</a></li>
+            <li class="nav-item"><a href="/gorev" class="nav-link"><span class="nav-icon">☑️</span> Görev Yönetimi</a></li>
+            <li class="nav-item"><a href="/quiz" class="nav-link"><span class="nav-icon">🧠</span> Quiz Yönetimi</a></li>
+            <li class="nav-item"><a href="/kaynaklar" class="nav-link active"><span class="nav-icon">📚</span> Kaynaklar</a></li>
+            <li class="nav-item"><a href="/ogrenciler" class="nav-link"><span class="nav-icon">👥</span> Öğrenciler</a></li>
+        </ul>
+        <div class="logout-section"><a href="/" class="logout-btn">↪ Çıkış Yap</a></div>
+    </aside>
+
+    <main class="main-content">
+        <div class="page-header">
+            <div>
+                <h1 class="page-title">Kaynak Yönetimi</h1>
+                <p class="page-subtitle">Öğrencilerle link ve dosya paylaş.</p>
+            </div>
+            <button onclick="document.getElementById('kaynakModal').style.display='block'" class="add-btn">+ Kaynak Ekle</button>
+        </div>
+
+        <div class="resource-grid">
+            {% if kaynaklar|length == 0 %}
+                <div style="grid-column: 1 / -1; text-align:center; padding:40px; color:#6b7280; border:1px dashed #d1d5db; border-radius:12px;">
+                    Henüz kaynak eklemediniz. Sağ üstten "Kaynak Ekle" butonuna basarak başlayabilirsiniz.
+                </div>
+            {% else %}
+                {% for kaynak in kaynaklar %}
+                <div class="r-card">
+                    <div class="r-icon-box {% if kaynak.tur == 'Dosya' %}dosya{% endif %}">
+                        {% if kaynak.tur == 'Dosya' %}📄{% else %}🔗{% endif %}
+                    </div>
+                    <div class="r-content">
+                        <div class="r-title">{{ kaynak.baslik }}</div>
+                        <div class="r-desc">{{ kaynak.aciklama }}</div>
+                        <a href="{{ kaynak.url }}" target="_blank" class="r-link">{{ kaynak.url }}</a>
+                        <div class="r-badge">{{ kaynak.tur }}</div>
+                    </div>
+                </div>
+                {% endfor %}
+            {% endif %}
+        </div>
+
+    </main>
+
+    <div id="kaynakModal" class="modal-overlay">
+        <div class="modal-box">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                <h2 style="font-size:20px; color:#111827;">Yeni Kaynak</h2>
+                <button onclick="document.getElementById('kaynakModal').style.display='none'" style="border:none; background:none; font-size:24px; cursor:pointer; color:#6b7280;">&times;</button>
+            </div>
+            
+            <form action="/add-resource" method="POST">
+                <div class="form-group">
+                    <label>Baslik</label>
+                    <input type="text" name="baslik" class="form-control" placeholder="Kaynak basligi..." required style="border-color:#7c3aed;">
+                </div>
+                
+                <div class="form-group">
+                    <label>Aciklama (opsiyonel)</label>
+                    <textarea name="aciklama" class="form-control" placeholder="Aciklama..." style="height:80px; resize:none;"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Tur</label>
+                    <select name="tur" class="form-control">
+                        <option value="Link">Link</option>
+                        <option value="Dosya">Dosya</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>URL</label>
+                    <input type="url" name="url" class="form-control" placeholder="https://..." required>
+                </div>
+
+                <button type="submit" class="add-btn" style="width:100%; padding:12px; font-size:15px; margin-top:10px;">Kaynak Ekle</button>
+            </form>
+        </div>
+    </div>
+
+</body>
+</html>
