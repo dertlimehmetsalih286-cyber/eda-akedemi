@@ -30,7 +30,7 @@
         
         /* Filtre Butonları */
         .filter-container { display: flex; gap: 10px; margin-bottom: 30px; }
-        .filter-btn { padding: 6px 16px; border-radius: 20px; border: 1px solid #e5e7eb; background: white; color: #4b5563; font-size: 14px; font-weight: 500; display: flex; align-items: center; gap: 8px; cursor: pointer; }
+        .filter-btn { padding: 6px 16px; border-radius: 20px; border: 1px solid #e5e7eb; background: white; color: #4b5563; font-size: 14px; font-weight: 500; display: flex; align-items: center; gap: 8px; cursor: pointer; transition: all 0.2s; }
         .filter-btn.active { background: #7c3aed; color: white; border-color: #7c3aed; }
         .filter-badge { background: #f3f4f6; color: #4b5563; border-radius: 12px; padding: 2px 8px; font-size: 12px; font-weight: bold; }
         .filter-btn.active .filter-badge { background: #f59e0b; color: white; }
@@ -93,40 +93,45 @@
         </div>
 
         <div class="filter-container">
-            <div class="filter-btn active">Tümü <span class="filter-badge">{{ gorevler|length }}</span></div>
-            <div class="filter-btn">LGS <span class="filter-badge" style="background:#f3f4f6; color:gray;">0</span></div>
-            <div class="filter-btn">YKS <span class="filter-badge" style="background:#f3f4f6; color:gray;">0</span></div>
-            <div class="filter-btn">Genel <span class="filter-badge" style="background:#f3f4f6; color:gray;">0</span></div>
+            <div class="filter-btn active" id="btn-lgs" onclick="kategoriDegistir('LGS')">LGS <span class="filter-badge" id="badge-lgs">0</span></div>
+            <div class="filter-btn" id="btn-yks" onclick="kategoriDegistir('YKS')">YKS <span class="filter-badge" id="badge-yks">0</span></div>
+            <div class="filter-btn" id="btn-genel" onclick="kategoriDegistir('Genel')">Genel <span class="filter-badge" id="badge-genel">0</span></div>
         </div>
 
-        {% if gorevler|length == 0 %}
-            <div style="text-align:center; padding:40px; color:#6b7280; border:1px dashed #d1d5db; border-radius:12px;">
-                Henüz hiç görev oluşturmadın. Sağ üstten "Görev Ekle" butonuna basarak başlayabilirsin.
-            </div>
-        {% else %}
-            {% for gorev in gorevler %}
-            <div class="task-card">
-                <div class="task-tags">
-                    {% if gorev.sinav_turu == 'YKS' %}
-                        <span class="tag-exam tag-yks">{{ gorev.sinav_turu }}</span>
-                    {% elif gorev.sinav_turu == 'LGS' %}
-                        <span class="tag-exam tag-lgs">{{ gorev.sinav_turu }}</span>
-                    {% else %}
-                        <span class="tag-exam tag-genel">{{ gorev.sinav_turu }}</span>
-                    {% endif %}
+        <div id="gorev-listesi">
+            {% if gorevler|length == 0 %}
+                <div style="text-align:center; padding:40px; color:#6b7280; border:1px dashed #d1d5db; border-radius:12px;">
+                    Henüz hiç görev oluşturmadın. Sağ üstten "Görev Ekle" butonuna basarak başlayabilirsin.
+                </div>
+            {% else %}
+                {% for gorev in gorevler %}
+                <div class="task-card" data-tur="{{ gorev.sinav_turu }}">
+                    <div class="task-tags">
+                        {% if gorev.sinav_turu == 'YKS' %}
+                            <span class="tag-exam tag-yks">{{ gorev.sinav_turu }}</span>
+                        {% elif gorev.sinav_turu == 'LGS' %}
+                            <span class="tag-exam tag-lgs">{{ gorev.sinav_turu }}</span>
+                        {% else %}
+                            <span class="tag-exam tag-genel">{{ gorev.sinav_turu }}</span>
+                        {% endif %}
+                        
+                        <span class="tag-subject">📖 {{ gorev.ders }}</span>
+                    </div>
+                    <h3 class="task-title">{{ gorev.baslik }}</h3>
+                    <p class="task-desc">{{ gorev.aciklama }}</p>
                     
-                    <span class="tag-subject">📖 {{ gorev.ders }}</span>
+                    <div class="task-footer">
+                        <span class="priority pri-{{ gorev.oncelik }}">{{ gorev.oncelik }}</span>
+                        <span class="task-date">📅 {{ gorev.son_tarih }}</span>
+                    </div>
                 </div>
-                <h3 class="task-title">{{ gorev.baslik }}</h3>
-                <p class="task-desc">{{ gorev.aciklama }}</p>
-                
-                <div class="task-footer">
-                    <span class="priority pri-{{ gorev.oncelik }}">{{ gorev.oncelik }}</span>
-                    <span class="task-date">📅 {{ gorev.son_tarih }}</span>
-                </div>
-            </div>
-            {% endfor %}
-        {% endif %}
+                {% endfor %}
+            {% endif %}
+        </div>
+        
+        <div id="bos-uyari" style="display:none; text-align:center; padding:40px; color:#6b7280; border:1px dashed #d1d5db; border-radius:12px;">
+            Bu kategoride henüz görev bulunmuyor.
+        </div>
 
     </main>
 
@@ -140,10 +145,10 @@
             <form action="/add-task" method="POST">
                 <div class="form-group">
                     <label>Sınav Türü</label>
-                    <select name="sinav_turu" class="form-control" style="background:#f8f9fc;">
-                        <option value="Genel">📚 Genel</option>
-                        <option value="YKS">🎓 YKS</option>
+                    <select name="sinav_turu" id="modal-sinav-turu" class="form-control" style="background:#f8f9fc;">
                         <option value="LGS">🏫 LGS</option>
+                        <option value="YKS">🎓 YKS</option>
+                        <option value="Genel">📚 Genel</option>
                     </select>
                 </div>
                 
@@ -172,7 +177,7 @@
                 <div class="form-row">
                     <div class="form-group">
                         <label>Son Tarih</label>
-                        <input type="date" name="son_tarih" class="form-control" value="2026-06-27" required>
+                        <input type="date" name="son_tarih" class="form-control" required>
                     </div>
                     <div class="form-group">
                         <label>Öncelik</label>
@@ -189,5 +194,71 @@
         </div>
     </div>
 
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Bugünün tarihini varsayılan olarak takvime ekle
+            const bugun = new Date().toISOString().split('T')[0];
+            document.querySelector('input[name="son_tarih"]').value = bugun;
+
+            // Kartları ve rozetleri say
+            const kartlar = document.querySelectorAll('.task-card');
+            let sayac = { 'LGS': 0, 'YKS': 0, 'Genel': 0 };
+
+            kartlar.forEach(kart => {
+                let tur = kart.getAttribute('data-tur');
+                if(sayac[tur] !== undefined) {
+                    sayac[tur]++;
+                }
+            });
+
+            // Rozet (badge) sayılarını güncelle
+            document.getElementById('badge-lgs').innerText = sayac['LGS'];
+            document.getElementById('badge-yks').innerText = sayac['YKS'];
+            document.getElementById('badge-genel').innerText = sayac['Genel'];
+
+            // Sayfa açıldığında varsayılan olarak LGS sekmesini aç
+            kategoriDegistir('LGS');
+        });
+
+        function kategoriDegistir(secilenTur) {
+            // 1. Tüm butonların aktifliğini kaldır
+            const butonlar = document.querySelectorAll('.filter-btn');
+            butonlar.forEach(btn => {
+                btn.classList.remove('active');
+                btn.querySelector('.filter-badge').style.background = '#f3f4f6';
+                btn.querySelector('.filter-badge').style.color = 'gray';
+            });
+
+            // 2. Tıklanan butonu aktif yap ve turuncu renk ver
+            const aktifButon = document.getElementById('btn-' + secilenTur.toLowerCase());
+            aktifButon.classList.add('active');
+            aktifButon.querySelector('.filter-badge').style.background = '#f59e0b';
+            aktifButon.querySelector('.filter-badge').style.color = 'white';
+
+            // 3. Modal'da "Sınav Türü" seçimini otomatik olarak o sekmeye ayarla
+            document.getElementById('modal-sinav-turu').value = secilenTur;
+
+            // 4. Kartları gizle veya göster
+            const kartlar = document.querySelectorAll('.task-card');
+            let gorunenKartSayisi = 0;
+
+            kartlar.forEach(kart => {
+                if(kart.getAttribute('data-tur') === secilenTur) {
+                    kart.style.display = 'block';
+                    gorunenKartSayisi++;
+                } else {
+                    kart.style.display = 'none';
+                }
+            });
+
+            // 5. Eğer seçilen kategoride hiç kart yoksa uyarı mesajı göster
+            const uyari = document.getElementById('bos-uyari');
+            if(gorunenKartSayisi === 0 && kartlar.length > 0) {
+                uyari.style.display = 'block';
+            } else {
+                uyari.style.display = 'none';
+            }
+        }
+    </script>
 </body>
 </html>
