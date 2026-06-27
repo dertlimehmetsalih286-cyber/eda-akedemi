@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>Eda Akademi - Quiz Sonuçları</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { display: flex; min-height: 100vh; background-color: #f8f9fc; }
+        
+        .sidebar { width: 260px; background-color: white; border-right: 1px solid #e5e7eb; display: flex; flex-direction: column; padding: 20px 0; position: fixed; height: 100vh; top: 0; left: 0; z-index: 1000; }
+        .logo-container { display: flex; align-items: center; padding: 0 20px 30px 20px; font-size: 22px; font-weight: bold; color: #111827; }
+        .logo-icon { background-color: #7c3aed; width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-right: 15px; }
+        .logo-icon svg { width: 24px; height: 24px; fill: white; }
+        .nav-links { list-style: none; flex-grow: 1; }
+        .nav-item { padding: 0 15px; margin-bottom: 5px; }
+        .nav-link { display: flex; align-items: center; padding: 12px 20px; text-decoration: none; color: #4b5563; font-weight: 500; border-radius: 8px; transition: all 0.2s; }
+        .nav-link.active { background-color: #7c3aed; color: white; }
+        .nav-icon { margin-right: 15px; font-size: 18px; width: 24px; text-align: center; }
+
+        .main-content { margin-left: 260px; padding: 40px; width: calc(100% - 260px); max-width: 1200px; }
+        .page-header { margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center; }
+        
+        .grid-container { display: grid; grid-template-columns: 2fr 1fr; gap: 30px; }
+        
+        /* Cevap Anahtarı Kısmı */
+        .answers-section { background: white; padding: 30px; border-radius: 16px; border: 1px solid #e5e7eb; }
+        .question-card { border-bottom: 1px solid #e5e7eb; padding: 15px 0; }
+        .question-card:last-child { border-bottom: none; }
+        .q-text { font-weight: bold; color: #111827; margin-bottom: 10px; font-size: 16px; }
+        .q-correct { color: #10b981; font-weight: bold; background: #d1fae5; display: inline-block; padding: 4px 10px; border-radius: 6px; font-size: 14px; }
+        .q-solution { color: #6b7280; font-size: 13px; margin-top: 10px; font-style: italic; }
+
+        /* Öğrenci Listesi Kısmı */
+        .students-section { background: white; padding: 30px; border-radius: 16px; border: 1px solid #e5e7eb; height: fit-content; }
+        .student-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #f3f4f6; }
+        .student-item:last-child { border-bottom: none; }
+        .s-name { font-weight: 500; color: #374151; display: flex; align-items: center; gap: 10px; }
+        .s-score { font-weight: bold; color: #7c3aed; }
+        
+        .btn-back { background: #f3f4f6; color: #4b5563; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-weight: 500; }
+        .btn-back:hover { background: #e5e7eb; }
+    </style>
+</head>
+<body>
+
+    <aside class="sidebar">
+        <div class="logo-container">
+            <div class="logo-icon"><svg viewBox="0 0 24 24"><path d="M12 3L1 9l4 2.18v6L12 21l7-3.82v-6l2.81-1.53L12 3zm6.82 6L12 12.72 5.18 9 12 5.28 18.82 9zM17 15.99l-5 2.73-5-2.73v-3.72l5 2.73 5-2.73v3.72z"/></svg></div>
+            Eda Akademi
+        </div>
+        <ul class="nav-links">
+            <li class="nav-item"><a href="/ogretmen" class="nav-link"><span class="nav-icon">⊞</span> Dashboard</a></li>
+            <li class="nav-item"><a href="/takvim" class="nav-link"><span class="nav-icon">📅</span> Takvim</a></li>
+            <li class="nav-item"><a href="/gorev" class="nav-link"><span class="nav-icon">☑️</span> Görev Yönetimi</a></li>
+            <li class="nav-item"><a href="/quiz" class="nav-link active"><span class="nav-icon">🧠</span> Quiz Yönetimi</a></li>
+            <li class="nav-item"><a href="/kaynaklar" class="nav-link"><span class="nav-icon">📚</span> Kaynaklar</a></li>
+            <li class="nav-item"><a href="/ogrenciler" class="nav-link"><span class="nav-icon">👥</span> Öğrenciler</a></li>
+        </ul>
+    </aside>
+
+    <main class="main-content">
+        <div class="page-header">
+            <div>
+                <h1 style="color: #111827;">{{ quiz_baslik }}</h1>
+                <p style="color: #6b7280; margin-top: 5px;">Cevap anahtarı ve öğrenci performans durumu.</p>
+            </div>
+            <a href="/quiz" class="btn-back">← Quizlere Dön</a>
+        </div>
+
+        <div class="grid-container">
+            <div class="answers-section">
+                <h2 style="font-size: 18px; margin-bottom: 20px; color: #111827;">📝 Cevap Anahtarı ve Çözümler</h2>
+                {% if sorular %}
+                    {% for s in sorular %}
+                    <div class="question-card">
+                        <div class="q-text">{{ loop.index }}. {{ s.soru_metni }}</div>
+                        <div class="q-correct">Doğru Cevap: {{ s.dogru }}</div>
+                        {% if s.cozum %}
+                            <div class="q-solution">Çözüm: {{ s.cozum }}</div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <p style="color: gray;">Bu quize henüz soru eklenmemiş.</p>
+                {% endif %}
+            </div>
+
+            <div class="students-section">
+                <h2 style="font-size: 18px; margin-bottom: 20px; color: #111827;">👥 Öğrenci Durumları</h2>
+                <p style="font-size: 13px; color: gray; margin-bottom: 15px;">Sınıftaki öğrencilerin genel puanları listelenmektedir.</p>
+                
+                {% for o in ogrenciler %}
+                <div class="student-item">
+                    <div class="s-name">
+                        <span style="background:#f3e8ff; color:#7c3aed; padding:4px 8px; border-radius:50%; font-size:12px;">{{ o.isim[0] | upper }}</span>
+                        {{ o.isim }}
+                    </div>
+                    <div class="s-score">{{ o.puan }} Puan</div>
+                </div>
+                {% else %}
+                    <p style="color: gray; text-align: center; margin-top: 20px;">Sistemde kayıtlı öğrenci yok.</p>
+                {% endfor %}
+            </div>
+        </div>
+    </main>
+
+</body>
+</html>
