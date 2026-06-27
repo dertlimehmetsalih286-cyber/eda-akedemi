@@ -181,6 +181,22 @@ def quiz():
         print(f"Quiz Hatası: {e}")
         
     return render_template('quiz.html', quizler=quizler, sorular=sorular)
+    @app.route('/quiz_sonuclari/<quiz_id>')
+def quiz_sonuclari(quiz_id):
+    if session.get('rol') != 'ogretmen': return redirect(url_for('index'))
+    # Basit bir mantıkla kullanıcıların toplam puanlarına veya quiz sonuçlarına bakabiliriz. 
+    # Şimdilik öğrencileri ve puanlarını listeleyerek öğretmen analizi sağlayalım.
+    cevap = requests.get(FIREBASE_USER_URL)
+    ogrenciler = []
+    if cevap.status_code == 200:
+        for doc in cevap.json().get('documents', []):
+            alanlar = doc.get('fields', {})
+            if alanlar.get('rol', {}).get('stringValue') == 'ogrenci':
+                ogrenciler.append({
+                    "isim": alanlar.get('isim', {}).get('stringValue', 'Öğrenci'),
+                    "puan": alanlar.get('puan', {}).get('integerValue', '0')
+                })
+    return render_template('quiz_sonuclari.html', ogrenciler=ogrenciler, quiz_id=quiz_id)
 @app.route('/kaynaklar')
 def kaynaklar():
     try:
