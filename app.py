@@ -3,13 +3,12 @@ import requests
 
 app = Flask(__name__)
 
-# Firebase REST API Linklerimiz (Sunucuyu yormayan şimşek hızında bağlantı)
+# Firebase REST API Linklerimiz (Şimşek hızında bağlantı)
 FIREBASE_USER_URL = "https://firestore.googleapis.com/v1/projects/edaakedemi-a9543/databases/(default)/documents/kullanicilar"
 FIREBASE_EVENT_URL = "https://firestore.googleapis.com/v1/projects/edaakedemi-a9543/databases/(default)/documents/etkinlikler"
 
 @app.route('/')
 def index():
-    # Temiz giriş ekranını açar
     return render_template('index.html')
 
 @app.route('/login', methods=['POST'])
@@ -58,9 +57,27 @@ def ogretmen_paneli():
 def ogrenciler():
     return render_template('ogrenciler.html')
 
+# VERİLERİ FIREBASE'DEN OKUYAN GELİŞMİŞ TAKVİM ROTASI
 @app.route('/takvim')
 def takvim():
-    return render_template('takvim.html')
+    try:
+        cevap = requests.get(FIREBASE_EVENT_URL)
+        etkinlikler = []
+        
+        if cevap.status_code == 200:
+            veriler = cevap.json().get('documents', [])
+            for doc in veriler:
+                alanlar = doc.get('fields', {})
+                etkinlikler.append({
+                    "baslik": alanlar.get('baslik', {}).get('stringValue', ''),
+                    "aciklama": alanlar.get('aciklama', {}).get('stringValue', ''),
+                    "tarih": alanlar.get('tarih', {}).get('stringValue', ''),
+                    "tur": alanlar.get('tur', {}).get('stringValue', '')
+                })
+        
+        return render_template('takvim.html', etkinlikler=etkinlikler)
+    except Exception as e:
+        return render_template('takvim.html', etkinlikler=[])
 
 @app.route('/kaynaklar')
 def kaynaklar():
@@ -74,7 +91,7 @@ def quiz():
 def gorev():
     return render_template('gorev.html')
 
-# --- VERİTABANINA ETKİNLİK KAYDETME FONKSİYONU ---
+# VERİTABANINA YENİ ETKİNLİK EKLEME ROTASI
 @app.route('/add-event', methods=['POST'])
 def add_event():
     baslik = request.form.get('baslik')
@@ -82,7 +99,6 @@ def add_event():
     tarih = request.form.get('tarih')
     tur = request.form.get('tur')
 
-    # Firebase'e gönderilecek paket düzeni
     payload = {
         "fields": {
             "baslik": {"stringValue": baslik},
@@ -95,7 +111,6 @@ def add_event():
     try:
         cevap = requests.post(FIREBASE_EVENT_URL, json=payload)
         if cevap.status_code == 200 or cevap.status_code == 201:
-            # Başarılıysa takvimi yenilemek için sayfaya geri fırlatır
             return redirect(url_for('takvim'))
         else:
             return f"<h1>Firebase Kayıt Hatası: {cevap.text}</h1>"
