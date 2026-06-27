@@ -2,10 +2,9 @@ from flask import Flask, render_template, request, redirect, url_for, session
 import requests
 
 app = Flask(__name__)
-# Sistemin kullanıcıları hatırlaması için gizli bir anahtar (şifreleme için gereklidir)
 app.secret_key = "eda_akademi_super_gizli_anahtar"
 
-# Firebase REST API Bağlantılarımız
+# Firebase REST API Bağlantıları
 FIREBASE_USER_URL = "https://firestore.googleapis.com/v1/projects/edaakedemi-a9543/databases/(default)/documents/kullanicilar"
 FIREBASE_EVENT_URL = "https://firestore.googleapis.com/v1/projects/edaakedemi-a9543/databases/(default)/documents/etkinlikler"
 FIREBASE_TASK_URL = "https://firestore.googleapis.com/v1/projects/edaakedemi-a9543/databases/(default)/documents/gorevler"
@@ -24,38 +23,30 @@ def login():
 
     try:
         cevap = requests.get(FIREBASE_USER_URL)
-        if cevap.status_code != 200:
-            return "<h1>Hata: Veritabanına ulaşılamadı.</h1>"
+        if cevap.status_code != 200: return "<h1>Hata: Veritabanına ulaşılamadı.</h1>"
             
         veriler = cevap.json().get('documents', [])
         giris_basarili = False
         bulunan_rol = ""
-        bulunan_isim = ""
         
         for doc in veriler:
             alanlar = doc.get('fields', {})
             db_kullanici = alanlar.get('kullanici_adi', {}).get('stringValue', '')
             db_sifre = alanlar.get('sifre', {}).get('stringValue', '')
             db_rol = alanlar.get('rol', {}).get('stringValue', '')
-            # Eğer Firebase'de 'isim' adında bir alan açtıysan onu alır, yoksa kullanıcı adının ilk harfini büyütüp isim yapar (Örn: zeynep -> Zeynep)
             db_isim = alanlar.get('isim', {}).get('stringValue', db_kullanici.capitalize())
             
             if db_kullanici == kullanici and db_sifre == sifre:
                 giris_basarili = True
                 bulunan_rol = db_rol
-                bulunan_isim = db_isim
-                
-                # Kullanıcıyı sisteme kaydediyoruz (Session)
                 session['kullanici_adi'] = db_kullanici
                 session['rol'] = db_rol
                 session['isim'] = db_isim
                 break 
             
         if giris_basarili:
-            if bulunan_rol == 'ogretmen':
-                return redirect(url_for('ogretmen_paneli'))
-            elif bulunan_rol == 'ogrenci':
-                return redirect(url_for('ogrenci_dashboard')) # ÖĞRENCİ PANELİNE YÖNLENDİRME
+            if bulunan_rol == 'ogretmen': return redirect(url_for('ogretmen_paneli'))
+            elif bulunan_rol == 'ogrenci': return redirect(url_for('ogrenci_dashboard'))
         else:
             return "<h1>Hata: Kullanıcı adı veya şifre yanlış!</h1>"
     except Exception as e:
@@ -63,12 +54,10 @@ def login():
 
 @app.route('/logout')
 def logout():
-    session.clear() # Çıkış yapınca hafızayı temizle
+    session.clear()
     return redirect(url_for('index'))
 
-# ==========================================
-# ÖĞRETMEN ROTALARI (Eski kodlar aynen duruyor)
-# ==========================================
+# --- ÖĞRETMEN ROTALARI ---
 @app.route('/ogretmen')
 def ogretmen_paneli(): return render_template('ogretmen.html')
 @app.route('/ogrenciler')
@@ -119,15 +108,32 @@ def add_question(): requests.post(FIREBASE_QUESTION_URL, json={"fields": {"quiz_
 @app.route('/add-resource', methods=['POST'])
 def add_resource(): requests.post(FIREBASE_RESOURCE_URL, json={"fields": {"baslik": {"stringValue": request.form.get('baslik')}, "aciklama": {"stringValue": request.form.get('aciklama', '')}, "tur": {"stringValue": request.form.get('tur')}, "url": {"stringValue": request.form.get('url')}}}); return redirect(url_for('kaynaklar'))
 
-# ==========================================
-# YENİ: ÖĞRENCİ ROTALARI
-# ==========================================
+# --- ÖĞRENCİ ROTALARI ---
 @app.route('/ogrenci')
 def ogrenci_dashboard():
-    # Sadece öğrenciler girebilsin
-    if session.get('rol') != 'ogrenci':
-        return redirect(url_for('index'))
+    if session.get('rol') != 'ogrenci': return redirect(url_for('index'))
     return render_template('ogrenci_dashboard.html')
+
+@app.route('/ogrenci_takvim')
+def ogrenci_takvim():
+    if session.get('rol') != 'ogrenci': return redirect(url_for('index'))
+    try:
+        cevap = requests.get(FIREBASE_EVENT_URL)
+        etkinlikler = [{"baslik": d.get('fields', {}).get('baslik', {}).get('stringValue', ''), "aciklama": d.get('fields', {}).get('aciklama', {}).get('stringValue', ''), "tarih": d.get('fields', {}).get('tarih', {}).get('stringValue', ''), "tur": d.get('fields', {}).get('tur', {}).get('stringValue', '')} for d in cevap.json().get('documents', [])] if cevap.status_code == 200 else []
+        return render_template('ogrenci_takvim.html', etkinlikler=etkinlikler)
+    except: return render_template('ogrenci_takvim.html', etkinlikler=[])
+
+@app.route('/ogrenci_gorevler')
+def ogrenci_gorevler(): return "<h1 style='padding:50px; font-family:sans-serif;'>Görevler Sayfası Bir Sonraki Adımda Eklenecek...</h1>"
+
+@app.route('/ogrenci_testler')
+def ogrenci_testler(): return "<h1 style='padding:50px; font-family:sans-serif;'>Akıllı Testler Bir Sonraki Adımda Eklenecek...</h1>"
+
+@app.route('/ogrenci_kaynaklar')
+def ogrenci_kaynaklar(): return "<h1 style='padding:50px; font-family:sans-serif;'>Kaynaklar Bir Sonraki Adımda Eklenecek...</h1>"
+
+@app.route('/ogrenci_siralama')
+def ogrenci_siralama(): return "<h1 style='padding:50px; font-family:sans-serif;'>Sıralama Bir Sonraki Adımda Eklenecek...</h1>"
 
 if __name__ == '__main__':
     app.run(debug=True)
