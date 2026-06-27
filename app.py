@@ -155,16 +155,32 @@ def gorev():
 
 @app.route('/quiz')
 def quiz():
+    if session.get('rol') != 'ogretmen': return redirect(url_for('index'))
     quizler, sorular = [], []
     try:
         res_q = requests.get(FIREBASE_QUIZ_URL)
-        if res_q.status_code == 200: quizler = [{"id": d.get('name', '').split('/')[-1], "baslik": d.get('fields', {}).get('baslik', {}).get('stringValue', ''), "hafta": d.get('fields', {}).get('hafta', {}).get('stringValue', ''), "sinav_turu": d.get('fields', {}).get('sinav_turu', {}).get('stringValue', ''), "aciklama": d.get('fields', {}).get('aciklama', {}).get('stringValue', '')} for d in res_q.json().get('documents', [])]
-        quizler.reverse()
+        if res_q.status_code == 200:
+            data = res_q.json().get('documents', [])
+            for d in data:
+                f = d.get('fields', {})
+                quizler.append({
+                    "id": d.get('name', '').split('/')[-1], 
+                    "baslik": f.get('baslik', {}).get('stringValue', 'İsimsiz Quiz')
+                })
+        
         res_s = requests.get(FIREBASE_QUESTION_URL)
-        if res_s.status_code == 200: sorular = [{"quiz_id": d.get('fields', {}).get('quiz_id', {}).get('stringValue', ''), "soru_metni": d.get('fields', {}).get('soru_metni', {}).get('stringValue', ''), "a": d.get('fields', {}).get('a', {}).get('stringValue', ''), "b": d.get('fields', {}).get('b', {}).get('stringValue', ''), "c": d.get('fields', {}).get('c', {}).get('stringValue', ''), "d": d.get('fields', {}).get('d', {}).get('stringValue', ''), "dogru": d.get('fields', {}).get('dogru', {}).get('stringValue', ''), "cozum": d.get('fields', {}).get('cozum', {}).get('stringValue', '')} for d in res_s.json().get('documents', [])]
-    except: pass
+        if res_s.status_code == 200:
+            data = res_s.json().get('documents', [])
+            for d in data:
+                f = d.get('fields', {})
+                sorular.append({
+                    "quiz_id": f.get('quiz_id', {}).get('stringValue', ''),
+                    "soru_metni": f.get('soru_metni', {}).get('stringValue', 'Soru metni yok')
+                })
+    except Exception as e:
+        print(f"Quiz Hatası: {e}")
+        
     return render_template('quiz.html', quizler=quizler, sorular=sorular)
-
 @app.route('/kaynaklar')
 def kaynaklar():
     try:
