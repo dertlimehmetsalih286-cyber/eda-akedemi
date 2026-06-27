@@ -4,73 +4,95 @@
     <meta charset="UTF-8">
     <title>Eda Akademi - Akıllı Testler</title>
     <style>
-        /* ... (Önceki menü CSS'lerin aynı kalmalı) ... */
-        .quiz-modal { position:fixed; top:0; left:0; width:100%; height:100%; background:white; z-index:9999; padding:50px; display:none; overflow-y:auto; }
-        .soru-kutu { max-width:800px; margin:auto; }
-        .sik { display:block; padding:15px; margin:10px 0; border:2px solid #e5e7eb; border-radius:12px; cursor:pointer; }
-        .sik.dogru { background:#dcfce7; border-color:#22c55e; }
-        .sik.yanlis { background:#fee2e2; border-color:#ef4444; }
-        .sonuc-karti { text-align:center; padding:40px; }
-        .puan-daire { width:150px; height:150px; border-radius:50%; border:10px solid #8b5cf6; display:flex; align-items:center; justify-content:center; font-size:30px; font-weight:bold; margin:20px auto; }
+        /* (Önceki sayfalardaki sidebar CSS'lerin aynı kalmalı) */
+        * { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI', sans-serif; }
+        body { display:flex; background:#f8f9fc; min-height:100vh; }
+        .main-content { flex-grow:1; padding:40px; margin-left:260px; }
+        
+        /* Kart Tasarımı */
+        .quiz-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(350px, 1fr)); gap:20px; }
+        .quiz-card { background:white; padding:25px; border-radius:16px; border:1px solid #e5e7eb; }
+        
+        /* Test Modal (Sınav Ekranı) */
+        .modal { position:fixed; top:0; left:0; width:100%; height:100%; background:white; z-index:9999; padding:50px; display:none; overflow-y:auto; }
+        .progress-bar { height:8px; background:#e5e7eb; border-radius:4px; margin-bottom:30px; }
+        .progress-fill { height:100%; background:#7c3aed; border-radius:4px; width:0%; transition:0.3s; }
+        .sik { display:block; padding:18px; margin:15px 0; border:2px solid #e5e7eb; border-radius:12px; cursor:pointer; font-weight:500; }
+        .sik:hover { border-color:#7c3aed; }
+        .btn-purple { background:#7c3aed; color:white; border:none; padding:15px 30px; border-radius:12px; font-size:16px; cursor:pointer; width:100%; }
+        
+        /* Sonuç Analizi */
+        .sonuc-kutu { text-align:center; max-width:600px; margin:auto; }
+        .cevap-karti { background:#f9fafb; padding:20px; border-radius:12px; margin:15px 0; text-align:left; border:1px solid #e5e7eb; }
+        .dogru-cik { background:#dcfce7; border-color:#22c55e; }
+        .yanlis-cik { background:#fee2e2; border-color:#ef4444; }
     </style>
 </head>
 <body>
     <main class="main-content">
         <h1 class="page-title">Akıllı Testler</h1>
-        <div class="resource-grid">
+        <p class="page-subtitle">Öğretmenin hazırladığı haftalık quiz'leri çöz ve puan kazan.</p>
+        
+        <div class="quiz-grid">
             {% for q in quizler %}
-            <div class="r-card">
-                <div class="r-title">{{ q.baslik }}</div>
-                <button class="add-btn" onclick="sinaviBaslat('{{ q.id }}')">Teste Başla</button>
+            <div class="quiz-card">
+                <span class="tag-lgs">{{ q.sinav_turu }}</span> <span class="tag-hafta">{{ q.hafta }}</span>
+                <h2 style="margin:10px 0;">{{ q.baslik }}</h2>
+                <p style="color:gray; font-size:14px; margin-bottom:20px;">{{ q.aciklama }}</p>
+                <button class="btn-purple" onclick="sinaviBaslat('{{ q.id }}')">Teste Başla</button>
             </div>
             {% endfor %}
         </div>
     </main>
 
-    <div id="test-ekrani" class="quiz-modal"></div>
+    <div id="sinav-alani" class="modal"></div>
 
     <script>
-        const sorular = {{ sorular | tojson | safe }};
-        let gecerliSorular = [];
-        let index = 0;
-        let dogruSayisi = 0;
+        const tumSorular = {{ sorular | tojson | safe }};
+        let aktifSorular = [], index = 0, skor = 0, cevaplar = [];
 
-        function sinaviBaslat(quizId) {
-            gecerliSorular = sorular.filter(s => s.quiz_id === quizId);
-            index = 0; dogruSayisi = 0;
-            soruGoster();
-            document.getElementById('test-ekrani').style.display = 'block';
+        function sinaviBaslat(qId) {
+            aktifSorular = tumSorular.filter(s => s.quiz_id === qId);
+            index = 0; skor = 0; cevaplar = [];
+            soruEkraniCiz();
+            document.getElementById('sinav-alani').style.display = 'block';
         }
 
-        function soruGoster() {
-            if(index >= gecerliSorular.length) { bitir(); return; }
-            let s = gecerliSorular[index];
-            document.getElementById('test-ekrani').innerHTML = `
-            <div class="soru-kutu">
-                <h3>Soru ${index+1}/${gecerliSorular.length}</h3>
-                <p style="font-size:18px; margin:20px 0;">${s.soru_metni}</p>
-                ${['a','b','c','d'].map(harf => `<div class="sik" onclick="cevapla('${harf}')">${s[harf]}</div>`).join('')}
-            </div>`;
+        function soruEkraniCiz() {
+            let s = aktifSorular[index];
+            let ilerleme = (index / aktifSorular.length) * 100;
+            document.getElementById('sinav-alani').innerHTML = `
+                <div class="soru-kutu" style="max-width:700px; margin:auto;">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:10px;"><span>Soru ${index+1}/${aktifSorular.length}</span><span>%${ilerleme.toFixed(0)} tamamlandı</span></div>
+                    <div class="progress-bar"><div class="progress-fill" style="width:${ilerleme}%"></div></div>
+                    <h2 style="margin-bottom:30px;">${s.soru_metni}</h2>
+                    ${['A','B','C','D'].map(h => `<div class="sik" onclick="cevapVer('${h}')">${h}) ${s[h.toLowerCase()]}</div>`).join('')}
+                </div>`;
         }
 
-        function cevapla(secim) {
-            let s = gecerliSorular[index];
-            if(secim === s.dogru) { dogruSayisi++; }
-            
-            // Animasyon: Doğruyu göster
+        function cevapVer(secim) {
+            let s = aktifSorular[index];
+            cevaplar.push({soru: s, secim: secim});
+            if(secim === s.dogru) skor++;
             index++;
-            setTimeout(soruGoster, 500);
+            if(index < aktifSorular.length) soruEkraniCiz(); else sonucGoster();
         }
 
-        function bitir() {
-            let yuzde = (dogruSayisi / gecerliSorular.length) * 100;
-            document.getElementById('test-ekrani').innerHTML = `
-            <div class="sonuc-karti">
-                <h1>Test Bitti!</h1>
-                <div class="puan-daire">%${yuzde.toFixed(0)}</div>
-                <p>Toplam ${gecerliSorular.length} sorudan ${dogruSayisi} doğru yaptın.</p>
-                <button class="add-btn" onclick="location.reload()">Panele Dön</button>
-            </div>`;
+        function sonucGoster() {
+            let html = `<div class="sonuc-karti"><h1>%${(skor/aktifSorular.length*100).toFixed(0)}</h1>
+                        <p>${skor}/${aktifSorular.length} doğru</p>
+                        <button class="btn-purple" style="margin:20px 0;">+10 Puan kazandın! 🎉</button><h3>CEVAPLAR</h3>`;
+            
+            cevaplar.forEach((c, i) => {
+                let durumu = c.secim === c.soru.dogru ? 'dogru-cik' : 'yanlis-cik';
+                html += `<div class="cevap-karti ${durumu}">
+                            <p>${i+1}. ${c.soru.soru_metni}</p>
+                            <p><b>Doğru Cevap:</b> ${c.soru.dogru}</p>
+                            <p style="font-size:13px;"><i>${c.soru.cozum}</i></p>
+                        </div>`;
+            });
+            html += `<button class="btn-purple" onclick="location.reload()">Panele Dön</button></div>`;
+            document.getElementById('sinav-alani').innerHTML = html;
         }
     </script>
 </body>
