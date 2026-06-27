@@ -2,7 +2,7 @@ from flask import Flask, render_template, request, redirect, url_for, session
 import requests
 
 app = Flask(__name__)
-# Oturum hafızası (session) için gerekli şifreleme anahtarı
+# Oturum yönetimi için gizli anahtar
 app.secret_key = "eda_akademi_super_gizli_anahtar"
 
 # --- FİREBASE REST API BAĞLANTILARI ---
@@ -44,7 +44,7 @@ def login():
                 bulunan_rol = db_rol
                 bulunan_isim = db_isim
                 
-                # Bilgileri oturum hafızasına alıyoruz
+                # Bilgileri oturuma kaydet
                 session['kullanici_adi'] = db_kullanici
                 session['rol'] = db_rol
                 session['isim'] = db_isim
@@ -67,7 +67,7 @@ def logout():
 
 
 # =========================================================================
-# OĞRETMEN PANELİ ROTALARI
+# ÖĞRETMEN PANELİ ROTALARI
 # =========================================================================
 
 @app.route('/ogretmen')
@@ -76,7 +76,30 @@ def ogretmen_paneli():
 
 @app.route('/ogrenciler')
 def ogrenciler():
-    return render_template('ogrenciler.html')
+    try:
+        cevap = requests.get(FIREBASE_USER_URL)
+        ogrenci_listesi = []
+        if cevap.status_code == 200:
+            for doc in cevap.json().get('documents', []):
+                alanlar = doc.get('fields', {})
+                if alanlar.get('rol', {}).get('stringValue') == 'ogrenci':
+                    puan_val = alanlar.get('puan', {})
+                    puan = 0
+                    if 'integerValue' in puan_val:
+                        puan = int(puan_val['integerValue'])
+                    elif 'stringValue' in puan_val:
+                        puan = int(puan_val['stringValue'])
+                    
+                    ogrenci_listesi.append({
+                        "isim": alanlar.get('isim', {}).get('stringValue', 'İsimsiz Öğrenci'),
+                        "kullanici_adi": alanlar.get('kullanici_adi', {}).get('stringValue', ''),
+                        "puan": puan
+                    })
+        # Öğrencileri puana göre yüksekten düşüğe sırala
+        ogrenci_listesi = sorted(ogrenci_listesi, key=lambda x: x['puan'], reverse=True)
+        return render_template('ogrenciler.html', ogrenciler=ogrenci_listesi)
+    except:
+        return render_template('ogrenciler.html', ogrenciler=[])
 
 @app.route('/takvim')
 def takvim():
@@ -207,7 +230,7 @@ def add_resource():
 
 
 # =========================================================================
-# ÖĞRENCİ PANELİ ROTALARI (HEPSİ EKSİKSİZ BURADA)
+# ÖĞRENCİ PANELİ ROTALARI
 # =========================================================================
 
 @app.route('/ogrenci')
@@ -305,29 +328,35 @@ def ogrenci_kaynaklar():
     except:
         return render_template('ogrenci_kaynaklar.html', kaynaklar=[])
 
-@app.route('/ogrenciler')
-def ogrenciler():
+@app.route('/ogrenci_siralama')
+def ogrenci_siralama():
+    if session.get('rol') != 'ogrenci': 
+        return redirect(url_for('index'))
     try:
         cevap = requests.get(FIREBASE_USER_URL)
-        ogrenci_listesi = []
+        ogrenciler = []
         if cevap.status_code == 200:
             for doc in cevap.json().get('documents', []):
                 alanlar = doc.get('fields', {})
-                if alanlar.get('rol', {}).get('stringValue') == 'ogrenci':
-                    # Puanı güvenli bir şekilde al
+                rol = alanlar.get('rol', {}).get('stringValue', '')
+                if rol == 'ogrenci':
                     puan_val = alanlar.get('puan', {})
-                    puan = int(puan_val.get('integerValue', puan_val.get('stringValue', '0')))
+                    puan = 0
+                    if 'integerValue' in puan_val:
+                        puan = int(puan_val['integerValue'])
+                    elif 'stringValue' in puan_val:
+                        puan = int(puan_val['stringValue'])
                     
-                    ogrenci_listesi.append({
-                        "isim": alanlar.get('isim', {}).get('stringValue', 'İsimsiz Öğrenci'),
-                        "kullanici_adi": alanlar.get('kullanici_adi', {}).get('stringValue', ''),
+                    ogrenciler.append({
+                        "isim": alanlar.get('isim', {}).get('stringValue', 'Öğrenci'),
                         "puan": puan
                     })
-        # Öğrencileri puana göre sırala
-        ogrenci_listesi = sorted(ogrenci_listesi, key=lambda x: x['puan'], reverse=True)
-        return render_template('ogrenciler.html', ogrenciler=ogrenci_listesi)
+        # Öğrencileri yüksek puandan düşüğe doğru sırala
+        ogrenciler = sorted(ogrenciler, key=lambda x: x['puan'], reverse=True)
+        return render_template('ogrenci_siralama.html', ogrenciler=ogrenciler)
     except:
-        return render_template('ogrenciler.html', ogrenciler=[])
+        return render_template('ogrenci_siralama.html', ogrenciler=[])
+
 
 if __name__ == '__main__':
     app.run(debug=True)
