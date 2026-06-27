@@ -2,23 +2,35 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <title>Eda Akademi - Quiz Yönetimi</title>
-    </head>
+    <title>Quiz Yönetimi</title>
+</head>
 <body>
-    <main class="main-content">
-        <h1>Quiz Yönetimi</h1>
-        <div class="quiz-grid">
-            {% for q in quizler %}
-            <div class="quiz-card" style="border:1px solid #ddd; padding:20px; margin:10px; border-radius:10px;">
-                <h2>{{ q.baslik if q.baslik else 'İsimsiz Quiz' }}</h2>
-                
-                <div style="display:flex; gap:10px; margin-top:15px;">
-                    <button onclick="soruEkle('{{ q.id }}')" class="btn-purple">+ Soru Ekle</button>
-                    <a href="/quiz_sonuclari/{{ q.id }}" style="background:#10b981; color:white; padding:10px 20px; border-radius:8px; text-decoration:none; font-weight:bold;">Çözenler</a>
-                </div>
+    <h1>Quiz Yönetimi</h1>
+
+    <div class="quiz-container">
+        {% for q in quizler %}
+        <div class="quiz-card" style="border: 1px solid #ccc; margin: 10px; padding: 15px;">
+            <h3>{{ q.baslik }}</h3>
+            <a href="{{ url_for('quiz_sonuclari', quiz_id=q.id) }}">Sonuçları Gör</a>
+        </div>
+        {% else %}
+            <p>Henüz kayıtlı quiz yok.</p>
+        {% endfor %}
+    </div>
+
+    <hr>
+
+    <h2>Sistemdeki Sorular</h2>
+    <div class="soru-container">
+        {% if sorular %}
+            {% for s in sorular %}
+            <div class="soru-card" style="border-bottom: 1px dashed #999; margin: 5px; padding: 5px;">
+                <p><strong>Quiz ID: {{ s.quiz_id }}</strong> - {{ s.soru_metni }}</p>
             </div>
             {% endfor %}
-        </div>
-    </main>
+        {% else %}
+            <p>Henüz soru eklenmemiş.</p>
+        {% endif %}
+    </div>
 </body>
 </html>
