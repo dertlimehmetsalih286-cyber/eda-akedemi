@@ -155,8 +155,35 @@ if __name__ == '__main__':
     app.run(debug=True)
 
 @app.route('/ogrenci_testler')
-def ogrenci_testler(): return "<h1 style='padding:50px; font-family:sans-serif;'>Akıllı Testler Bir Sonraki Adımda Eklenecek...</h1>"
-
+def ogrenci_testler():
+    if session.get('rol') != 'ogrenci': return redirect(url_for('index'))
+    quizler, sorular = [], []
+    try:
+        # Firebase'den öğretmen tarafından oluşturulan quizleri ve soruları çekiyoruz
+        res_q = requests.get(FIREBASE_QUIZ_URL)
+        if res_q.status_code == 200:
+            for doc in res_q.json().get('documents', []):
+                fields = doc.get('fields', {})
+                quizler.append({
+                    "id": doc.get('name', '').split('/')[-1],
+                    "baslik": fields.get('baslik', {}).get('stringValue', ''),
+                    "hafta": fields.get('hafta', {}).get('stringValue', ''),
+                    "sinav_turu": fields.get('sinav_turu', {}).get('stringValue', ''),
+                    "aciklama": fields.get('aciklama', {}).get('stringValue', '')
+                })
+        
+        res_s = requests.get(FIREBASE_QUESTION_URL)
+        if res_s.status_code == 200:
+            sorular = [{"quiz_id": d.get('fields', {}).get('quiz_id', {}).get('stringValue', ''), 
+                        "soru_metni": d.get('fields', {}).get('soru_metni', {}).get('stringValue', ''), 
+                        "a": d.get('fields', {}).get('a', {}).get('stringValue', ''), 
+                        "b": d.get('fields', {}).get('b', {}).get('stringValue', ''), 
+                        "c": d.get('fields', {}).get('c', {}).get('stringValue', ''), 
+                        "d": d.get('fields', {}).get('d', {}).get('stringValue', ''), 
+                        "dogru": d.get('fields', {}).get('dogru', {}).get('stringValue', ''), 
+                        "cozum": d.get('fields', {}).get('cozum', {}).get('stringValue', '')} for d in res_s.json().get('documents', [])]
+    except: pass
+    return render_template('ogrenci_testler.html', quizler=quizler, sorular=sorular)
 @app.route('/ogrenci_kaynaklar')
 def ogrenci_kaynaklar(): return "<h1 style='padding:50px; font-family:sans-serif;'>Kaynaklar Bir Sonraki Adımda Eklenecek...</h1>"
 
