@@ -28,13 +28,11 @@
         .page-title { font-size: 28px; font-weight: bold; color: #111827; margin-bottom: 8px; display: flex; align-items: center; gap: 10px; }
         .page-subtitle { color: #6b7280; font-size: 15px; margin-bottom: 30px; }
 
-        /* Üstteki Özet Kartları */
         .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 30px; }
         .stat-card { background: white; padding: 25px; border-radius: 16px; border: 1px solid #e5e7eb; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
         .stat-title { color: #4b5563; font-size: 15px; margin-bottom: 10px; font-weight: 500; }
         .stat-value { font-size: 36px; font-weight: bold; color: #111827; }
 
-        /* Tüm Öğrenciler Listesi */
         .list-container { background: white; padding: 30px; border-radius: 16px; border: 1px solid #e5e7eb; }
         .list-title { font-size: 18px; font-weight: bold; color: #111827; margin-bottom: 20px; }
         
@@ -63,6 +61,7 @@
             <li class="nav-item"><a href="/quiz" class="nav-link"><span class="nav-icon">🧠</span> Quiz Yönetimi</a></li>
             <li class="nav-item"><a href="/kaynaklar" class="nav-link"><span class="nav-icon">📚</span> Kaynaklar</a></li>
             <li class="nav-item"><a href="/ogrenciler" class="nav-link active"><span class="nav-icon">👥</span> Öğrenciler</a></li>
+            <li class="nav-item"><a href="/ogretmen_analiz" class="nav-link"><span class="nav-icon">🤖</span> Yapay Zeka Analizi</a></li>
         </ul>
         <div class="user-profile-box">
             <div class="user-name">{{ session.isim if session.isim else 'Öğretmen' }}</div>
@@ -106,7 +105,7 @@
             {% else %}
             <div style="text-align:center; padding:30px; color:gray;">Sistemde kayıtlı öğrenci bulunamadı.</div>
             {% endfor %}
-            <li class="nav-item"><a href="/ogretmen_analiz" class="nav-link"><span class="nav-icon">🤖</span> Yapay Zeka Analizi</a></li>
+            
         </div>
     </main>
 </body>
