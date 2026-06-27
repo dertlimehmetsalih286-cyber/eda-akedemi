@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eda Akademi - Görevlerim</title>
+    <style>
+        /* Genel İskelet ve Menü */
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { display: flex; min-height: 100vh; background-color: #f8f9fc; }
+        
+        .sidebar { width: 260px; background-color: white; border-right: 1px solid #e5e7eb; display: flex; flex-direction: column; padding: 20px 0; position: fixed; height: 100vh; }
+        .logo-container { display: flex; align-items: center; padding: 0 20px 30px 20px; font-size: 22px; font-weight: bold; color: #111827; }
+        .logo-icon { background-color: #7c3aed; width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-right: 15px; }
+        .logo-icon svg { width: 24px; height: 24px; fill: white; }
+        .nav-links { list-style: none; flex-grow: 1; }
+        .nav-item { padding: 0 15px; margin-bottom: 5px; }
+        .nav-link { display: flex; align-items: center; padding: 12px 20px; text-decoration: none; color: #4b5563; font-weight: 500; border-radius: 8px; transition: all 0.2s; }
+        .nav-link:hover { background-color: #f3f4f6; color: #111827; }
+        .nav-link.active { background-color: #7c3aed; color: white; }
+        .nav-icon { margin-right: 15px; font-size: 18px; width: 24px; text-align: center; }
+        
+        .user-profile-box { margin: 20px 15px; padding: 15px; background: #f3f4f6; border-radius: 12px; }
+        .user-name { font-weight: bold; color: #111827; font-size: 15px; margin-bottom: 2px; }
+        .user-role { color: #6b7280; font-size: 13px; }
+        .logout-section { padding: 0 15px 20px 15px; }
+        .logout-btn { color: #ef4444; text-decoration: none; font-size: 14px; font-weight: 500; display: flex; align-items: center; gap: 10px; }
+
+        /* İçerik Alanı */
+        .main-content { flex-grow: 1; padding: 40px; margin-left: 260px; max-width: 900px; }
+        .page-title { font-size: 28px; font-weight: bold; color: #111827; margin-bottom: 8px; }
+        .page-subtitle { color: #6b7280; font-size: 15px; margin-bottom: 30px; }
+        
+        /* Ders Filtreleri (Tümü kaldırıldı) */
+        .filter-container { display: flex; gap: 10px; margin-bottom: 40px; flex-wrap: wrap; }
+        .filter-btn { padding: 8px 16px; border-radius: 20px; border: 1px solid #e5e7eb; background: white; color: #4b5563; font-size: 14px; font-weight: 500; display: flex; align-items: center; gap: 8px; cursor: pointer; transition: all 0.2s; }
+        .filter-btn:hover { border-color: #7c3aed; }
+        .filter-btn.active { background: #8b5cf6; color: white; border-color: #8b5cf6; }
+        .filter-badge { background: #f59e0b; color: white; border-radius: 12px; padding: 2px 8px; font-size: 12px; font-weight: bold; }
+
+        /* Bölüm Başlıkları */
+        .section-header { display: flex; align-items: center; gap: 10px; font-size: 18px; font-weight: 600; color: #111827; margin-bottom: 20px; }
+        .section-icon { font-size: 20px; }
+        .section-count { background: #f59e0b; color: white; border-radius: 12px; padding: 2px 10px; font-size: 13px; font-weight: bold; }
+
+        /* Görev Kartları */
+        .task-card { background: white; padding: 20px; border-radius: 16px; border: 1px solid #e5e7eb; margin-bottom: 15px; display: flex; align-items: flex-start; gap: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.02); transition: all 0.3s; }
+        
+        .circle-check { width: 24px; height: 24px; border-radius: 50%; border: 2px solid #d1d5db; display: flex; align-items: center; justify-content: center; margin-top: 5px; color: transparent; transition: all 0.2s; flex-shrink: 0; }
+        
+        .task-content { flex-grow: 1; }
+        .task-tags { display: flex; gap: 10px; margin-bottom: 10px; align-items: center; }
+        .tag-exam { padding: 4px 10px; border-radius: 15px; font-size: 12px; font-weight: 600; }
+        .tag-yks { background: #fae8ff; color: #c026d3; }
+        .tag-lgs { background: #e0e7ff; color: #4f46e5; }
+        .tag-genel { background: #f3f4f6; color: #4b5563; }
+        .tag-subject { padding: 4px 10px; border-radius: 15px; font-size: 12px; font-weight: 500; background: #f3f4f6; color: #6b7280; display: flex; align-items: center; gap: 4px; }
+        
+        .task-title { font-size: 18px; font-weight: bold; color: #111827; margin-bottom: 6px; }
+        .task-desc { font-size: 14px; color: #6b7280; margin-bottom: 15px; }
+        
+        .task-footer { display: flex; gap: 15px; align-items: center; font-size: 13px; }
+        .priority { padding: 4px 10px; border-radius: 15px; font-weight: 600; }
+        .pri-Yüksek { background: #fee2e2; color: #ef4444; }
+        .pri-Orta { background: #fef08a; color: #ca8a04; }
+        .pri-Düşük { background: #dcfce7; color: #22c55e; }
+        .task-date { color: #6b7280; display: flex; align-items: center; gap: 5px; }
+
+        .complete-btn { background: #8b5cf6; color: white; border: none; padding: 10px 20px; border-radius: 12px; cursor: pointer; font-weight: 600; font-size: 13px; display: flex; align-items: center; gap: 5px; transition: background 0.2s; }
+        .complete-btn:hover { background: #7c3aed; }
+
+        /* Tamamlanan Kart Efektleri */
+        .task-card.completed { background: #f9fafb; border-color: #f3f4f6; opacity: 0.7; }
+        .task-card.completed .circle-check { border-color: #8b5cf6; background: #8b5cf6; color: white; }
+        .task-card.completed .task-title { text-decoration: line-through; color: #9ca3af; }
+        .task-card.completed .task-desc { text-decoration: line-through; color: #9ca3af; }
+        .task-card.completed .complete-btn { display: none; }
+        .undo-btn { background: #e5e7eb; color: #4b5563; border: none; padding: 8px 15px; border-radius: 12px; cursor: pointer; font-weight: 600; font-size: 12px; }
+        .undo-btn:hover { background: #d1d5db; }
+
+    </style>
+</head>
+<body>
+
+    <aside class="sidebar">
+        <div class="logo-container">
+            <div class="logo-icon">
+                <svg viewBox="0 0 24 24"><path d="M12 3L1 9l4 2.18v6L12 21l7-3.82v-6l2.81-1.53L12 3zm6.82 6L12 12.72 5.18 9 12 5.28 18.82 9zM17 15.99l-5 2.73-5-2.73v-3.72l5 2.73 5-2.73v3.72z"/></svg>
+            </div>
+            Eda Akademi
+        </div>
+        <ul class="nav-links">
+            <li class="nav-item"><a href="/ogrenci" class="nav-link"><span class="nav-icon">⊞</span> Dashboard</a></li>
+            <li class="nav-item"><a href="/ogrenci_takvim" class="nav-link"><span class="nav-icon">📅</span> Takvim</a></li>
+            <li class="nav-item"><a href="/ogrenci_gorevler" class="nav-link active"><span class="nav-icon">☑️</span> Görevler</a></li>
+            <li class="nav-item"><a href="/ogrenci_testler" class="nav-link"><span class="nav-icon">🧠</span> Akıllı Testler</a></li>
+            <li class="nav-item"><a href="/ogrenci_kaynaklar" class="nav-link"><span class="nav-icon">📚</span> Kaynaklar</a></li>
+            <li class="nav-item"><a href="/ogrenci_siralama" class="nav-link"><span class="nav-icon">🏆</span> Sıralama</a></li>
+        </ul>
+        
+        <div class="user-profile-box">
+            <div class="user-name" id="aktif-ogrenci">{{ session.isim if session.isim else 'Öğrenci' }}</div>
+            <div class="user-role">Öğrenci</div>
+        </div>
+        <div class="logout-section"><a href="/logout" class="logout-btn">↪ Çıkış Yap</a></div>
+    </aside>
+
+    <main class="main-content">
+        <div class="page-title">Görevlerim</div>
+        <div class="page-subtitle">Öğretmenin verdiği tüm görevler konu konu listeleniyor.</div>
+
+        <div class="filter-container" id="filtre-alani"></div>
+
+        <div style="margin-bottom: 40px;">
+            <div class="section-header">
+                <span class="section-icon" style="color:#ef4444;">❗</span> 
+                Bekleyen Görevler 
+                <span class="section-count" id="bekleyen-sayisi">0</span>
+            </div>
+            <div id="bekleyen-gorevler-listesi">
+                </div>
+        </div>
+
+        <div>
+            <div class="section-header" style="color:#6b7280;">
+                <span class="section-icon">✔</span> 
+                Tamamlananlar 
+                <span class="section-count" style="background:#9ca3af;" id="tamamlanan-sayisi">0</span>
+            </div>
+            <div id="tamamlanan-gorevler-listesi">
+                </div>
+        </div>
+
+    </main>
+
+    <script>
+        // Python'dan tüm görevleri al
+        const tumGorevler = {{ gorevler | tojson | safe }};
+        
+        // Öğrencinin ismine özel Local Storage anahtarı oluştur (Ali ile Zeynep'in görevleri karışmasın diye)
+        const ogrenciIsim = document.getElementById('aktif-ogrenci').innerText;
+        const storageKey = 'tamamlananGorevler_' + ogrenciIsim;
+
+        // Hafızadan tamamlananların ID'lerini çek
+        let tamamlananIdler = JSON.parse(localStorage.getItem(storageKey)) || [];
+        
+        // Tümü butonu yok, bu yüzden dersleri otomatik tespit edip butonlarını oluşturacağız
+        let dersler = [...new Set(tumGorevler.map(g => g.ders))];
+        let aktifDers = dersler.length > 0 ? dersler[0] : null;
+
+        function filtreleriCiz() {
+            const filtreAlani = document.getElementById('filtre-alani');
+            filtreAlani.innerHTML = '';
+            
+            if(dersler.length === 0) {
+                filtreAlani.innerHTML = '<span style="color:gray;">Görev bulunmuyor.</span>';
+                return;
+            }
+
+            dersler.forEach(ders => {
+                // Bu derse ait görev sayısını hesapla
+                let dersGorevSayisi = tumGorevler.filter(g => g.ders === ders).length;
+                
+                let btn = document.createElement('div');
+                btn.className = `filter-btn ${ders === aktifDers ? 'active' : ''}`;
+                btn.innerHTML = `📖 ${ders} <span class="filter-badge" style="${ders === aktifDers ? 'background:white; color:#8b5cf6;' : ''}">${dersGorevSayisi}</span>`;
+                
+                btn.onclick = () => {
+                    aktifDers = ders;
+                    filtreleriCiz();
+                    gorevleriCiz();
+                };
+                filtreAlani.appendChild(btn);
+            });
+        }
+
+        function gorevleriCiz() {
+            const bekleyenKutu = document.getElementById('bekleyen-gorevler-listesi');
+            const tamamlananKutu = document.getElementById('tamamlanan-gorevler-listesi');
+            
+            bekleyenKutu.innerHTML = '';
+            tamamlananKutu.innerHTML = '';
+
+            let seciliGorevler = tumGorevler.filter(g => g.ders === aktifDers);
+            let bekleyenSayisi = 0;
+            let tamamlananSayisi = 0;
+
+            if(seciliGorevler.length === 0) {
+                bekleyenKutu.innerHTML = '<div style="text-align:center; padding:30px; color:gray; border:1px dashed #ccc; border-radius:12px;">Bu derse ait görev bulunmuyor.</div>';
+            }
+
+            seciliGorevler.forEach(gorev => {
+                let isCompleted = tamamlananIdler.includes(gorev.id);
+                
+                let examClass = gorev.sinav_turu === 'YKS' ? 'tag-yks' : gorev.sinav_turu === 'LGS' ? 'tag-lgs' : 'tag-genel';
+                let html = `
+                <div class="task-card ${isCompleted ? 'completed' : ''}">
+                    <div class="circle-check">${isCompleted ? '✔' : ''}</div>
+                    
+                    <div class="task-content">
+                        <div class="task-tags">
+                            <span class="tag-exam ${examClass}">${gorev.sinav_turu}</span>
+                            <span class="tag-subject">📖 ${gorev.ders}</span>
+                        </div>
+                        <div class="task-title">${gorev.baslik}</div>
+                        <div class="task-desc">${gorev.aciklama}</div>
+                        <div class="task-footer">
+                            <span class="priority pri-${gorev.oncelik}">${gorev.oncelik}</span>
+                            <span class="task-date">📅 ${gorev.son_tarih}</span>
+                        </div>
+                    </div>
+                    
+                    ${!isCompleted ? 
+                        `<button class="complete-btn" onclick="tamamla('${gorev.id}')">✔ Tamamlandı</button>` : 
+                        `<button class="undo-btn" onclick="geriAl('${gorev.id}')">Geri Al</button>`
+                    }
+                </div>`;
+
+                if(isCompleted) {
+                    tamamlananKutu.innerHTML += html;
+                    tamamlananSayisi++;
+                } else {
+                    bekleyenKutu.innerHTML += html;
+                    bekleyenSayisi++;
+                }
+            });
+
+            if(bekleyenSayisi === 0 && seciliGorevler.length > 0) {
+                bekleyenKutu.innerHTML = `
+                <div style="text-align:center; padding:40px; background:white; border-radius:16px; border:1px solid #e5e7eb;">
+                    <div style="font-size:40px; color:#8b5cf6; margin-bottom:10px;">✔</div>
+                    <h3 style="color:#111827; margin-bottom:5px;">Harika!</h3>
+                    <p style="color:#6b7280; font-size:14px;">Bu dersteki tüm görevleri tamamladın.</p>
+                </div>`;
+            }
+
+            document.getElementById('bekleyen-sayisi').innerText = bekleyenSayisi;
+            document.getElementById('tamamlanan-sayisi').innerText = tamamlananSayisi;
+        }
+
+        // Görevi Tamamlama Fonksiyonu
+        function tamamla(id) {
+            tamamlananIdler.push(id);
+            localStorage.setItem(storageKey, JSON.stringify(tamamlananIdler));
+            gorevleriCiz();
+        }
+
+        // Görevi Yanlışlıkla Tamamlayanlar İçin Geri Alma Fonksiyonu
+        function geriAl(id) {
+            tamamlananIdler = tamamlananIdler.filter(item => item !== id);
+            localStorage.setItem(storageKey, JSON.stringify(tamamlananIdler));
+            gorevleriCiz();
+        }
+
+        // Sayfa Yüklendiğinde Başlat
+        filtreleriCiz();
+        gorevleriCiz();
+    </script>
+</body>
+</html>
