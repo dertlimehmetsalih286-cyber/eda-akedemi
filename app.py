@@ -156,22 +156,32 @@ def gorev():
 @app.route('/quiz')
 def quiz():
     if session.get('rol') != 'ogretmen': return redirect(url_for('index'))
+    
     quizler = []
-    sorular = [] # Boş liste tanımladık ki hata vermesin
+    sorular = [] # Değişkeni burada mutlaka tanımlıyoruz
+    
     try:
-        res = requests.get(FIREBASE_QUIZ_URL)
-        if res.status_code == 200:
-            data = res.json().get('documents', [])
-            for d in data:
-                f = d.get('fields', {})
+        # Quizleri Çek
+        res_q = requests.get(FIREBASE_QUIZ_URL)
+        if res_q.status_code == 200:
+            for d in res_q.json().get('documents', []):
                 quizler.append({
                     "id": d.get('name', '').split('/')[-1], 
-                    "baslik": f.get('baslik', {}).get('stringValue', 'İsimsiz')
+                    "baslik": d.get('fields', {}).get('baslik', {}).get('stringValue', 'İsimsiz')
                 })
-    except Exception as e:
-        print(f"Hata: {e}")
         
-    # 'sorular' değişkenini boş da olsa gönderiyoruz ki şablon çökmesin
+        # Soruları Çek
+        res_s = requests.get(FIREBASE_QUESTION_URL)
+        if res_s.status_code == 200:
+            for d in res_s.json().get('documents', []):
+                f = d.get('fields', {})
+                sorular.append({
+                    "quiz_id": f.get('quiz_id', {}).get('stringValue', ''),
+                    "soru_metni": f.get('soru_metni', {}).get('stringValue', 'Soru yok')
+                })
+    except: pass
+    
+    # Şimdi hem quizleri hem soruları gönderiyoruz, hata kalmadı
     return render_template('quiz.html', quizler=quizler, sorular=sorular)
 @app.route('/quiz_sonuclari/<quiz_id>')
 def quiz_sonuclari(quiz_id):
