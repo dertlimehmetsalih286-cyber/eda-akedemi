@@ -44,21 +44,39 @@ def logout():
 
 # ==================== ÖĞRETMEN ROTALARI ====================
 @app.route('/ogretmen')
-def ogretmen_paneli(): return render_template('ogretmen.html')
-@app.route('/ogrenciler')
-def ogrenciler():
+def ogretmen_paneli():
+    if session.get('rol') != 'ogretmen': return redirect(url_for('index'))
+    
+    toplam_gorev = 0
+    aktif_puan = 0
+    tamamlanma_orani = 0
     try:
-        cevap = requests.get(FIREBASE_USER_URL)
-        ogrenci_listesi = [{"isim": d.get('fields', {}).get('isim', {}).get('stringValue', 'Öğrenci'), "kullanici_adi": d.get('fields', {}).get('kullanici_adi', {}).get('stringValue', ''), "puan": int(d.get('fields', {}).get('puan', {}).get('integerValue', d.get('fields', {}).get('puan', {}).get('stringValue', '0')))} for d in cevap.json().get('documents', []) if d.get('fields', {}).get('rol', {}).get('stringValue') == 'ogrenci'] if cevap.status_code == 200 else []
-        return render_template('ogrenciler.html', ogrenciler=sorted(ogrenci_listesi, key=lambda x: x['puan'], reverse=True))
-    except: return render_template('ogrenciler.html', ogrenciler=[])
-@app.route('/takvim')
-def takvim():
-    try:
-        cevap = requests.get(FIREBASE_EVENT_URL)
-        etkinlikler = [{"baslik": d.get('fields', {}).get('baslik', {}).get('stringValue', ''), "aciklama": d.get('fields', {}).get('aciklama', {}).get('stringValue', ''), "tarih": d.get('fields', {}).get('tarih', {}).get('stringValue', ''), "tur": d.get('fields', {}).get('tur', {}).get('stringValue', '')} for d in cevap.json().get('documents', [])] if cevap.status_code == 200 else []
-        return render_template('takvim.html', etkinlikler=etkinlikler)
-    except: return render_template('takvim.html', etkinlikler=[])
+        # Toplam verilen görev sayısını bul
+        res_task = requests.get(FIREBASE_TASK_URL)
+        if res_task.status_code == 200:
+            toplam_gorev = len(res_task.json().get('documents', []))
+            
+        # Toplam öğrenci puanlarını hesapla
+        res_user = requests.get(FIREBASE_USER_URL)
+        if res_user.status_code == 200:
+            ogrenci_sayisi = 0
+            for doc in res_user.json().get('documents', []):
+                fields = doc.get('fields', {})
+                if fields.get('rol', {}).get('stringValue') == 'ogrenci':
+                    ogrenci_sayisi += 1
+                    p_val = fields.get('puan', {})
+                    aktif_puan += int(p_val.get('integerValue', p_val.get('stringValue', '0')))
+            
+            # Sınıfın genel tamamlanma oranını hesapla
+            if toplam_gorev > 0 and ogrenci_sayisi > 0:
+                beklenen_puan = toplam_gorev * 10 * ogrenci_sayisi
+                tamamlanma_orani = int((aktif_puan / beklenen_puan) * 100) if beklenen_puan > 0 else 0
+                if tamamlanma_orani > 100: tamamlanma_orani = 100
+    except:
+        pass
+    return render_template('ogretmen.html', toplam_gorev=toplam_gorev, aktif_puan=aktif_puan, tamamlanma_orani=tamamlanma_orani)
+
+
 @app.route('/gorev')
 def gorev():
     try:
@@ -98,9 +116,38 @@ def add_resource(): requests.post(FIREBASE_RESOURCE_URL, json={"fields": {"basli
 
 
 # ==================== ÖĞRENCİ ROTALARI ====================
-@app.route('/ogrenci')
-def ogrenci_dashboard(): return render_template('ogrenci_dashboard.html') if session.get('rol') == 'ogrenci' else redirect(url_for('index'))
-@app.route('/ogrenci_takvim')
+
+@app.route('/ogrenciler')
+def ogrenciler():
+    if session.get('rol') != 'ogretmen': return redirect(url_for('index'))
+    try:
+        cevap = requests.get(FIREBASE_USER_URL)
+        ogrenci_listesi = []
+        if cevap.status_code == 200:
+            for doc in cevap.json().get('documents', []):
+                alanlar = doc.get('fields', {})
+                if alanlar.get('rol', {}).get('stringValue') == 'ogrenci':
+                    puan_val = alanlar.get('puan', {})
+                    puan = int(puan_val.get('integerValue', puan_val.get('stringValue', '0')))
+                    # Her 10 puan 1 tamamlanmış görev/test kabul ediliyor
+                    tamamlanan = puan // 10 
+                    
+                    ogrenci_listesi.append({
+                        "isim": alanlar.get('isim', {}).get('stringValue', 'Öğrenci'),
+                        "kullanici_adi": alanlar.get('kullanici_adi', {}).get('stringValue', ''),
+                        "puan": puan,
+                        "tamamlanan": tamamlanan
+                    })
+        
+        # Puanlara göre sırala ve özet istatistikleri çıkar
+        ogrenci_listesi = sorted(ogrenci_listesi, key=lambda x: x['puan'], reverse=True)
+        toplam_ogrenci = len(ogrenci_listesi)
+        en_yuksek_puan = ogrenci_listesi[0]['puan'] if toplam_ogrenci > 0 else 0
+        toplam_tamamlanan = sum(o['tamamlanan'] for o in ogrenci_listesi)
+        
+        return render_template('ogrenciler.html', ogrenciler=ogrenci_listesi, toplam_ogrenci=toplam_ogrenci, en_yuksek_puan=en_yuksek_puan, toplam_tamamlanan=toplam_tamamlanan)
+    except:
+        return render_template('ogrenciler.html', ogrenciler=[], toplam_ogrenci=0, en_yuksek_puan=0, toplam_tamamlanan=0)
 def ogrenci_takvim():
     try:
         cevap = requests.get(FIREBASE_EVENT_URL)
