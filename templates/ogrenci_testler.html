@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>Eda Akademi - Akıllı Testler</title>
+    <style>
+        /* (Daha önceki quiz.html'deki tasarımın aynısını buraya kopyala/yapıştır) */
+        /* ...CSS kodları... */
+        .quiz-modal { position:fixed; top:0; left:0; width:100%; height:100%; background:white; z-index:2000; padding:40px; display:none; overflow-y:auto; }
+    </style>
+</head>
+<body>
+    <main class="main-content">
+        <h1 class="page-title">Akıllı Testler</h1>
+        <div class="resource-grid">
+            {% for q in quizler %}
+            <div class="r-card">
+                <div class="r-content">
+                    <div class="r-title">{{ q.baslik }}</div>
+                    <button class="add-btn" onclick="sinaviBaslat('{{ q.id }}')">Teste Başla</button>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </main>
+
+    <div id="test-ekrani" class="quiz-modal"></div>
+
+    <script>
+        const sorular = {{ sorular | tojson | safe }};
+        
+        function sinaviBaslat(quizId) {
+            const buQuizinSorulari = sorular.filter(s => s.quiz_id === quizId);
+            const ekran = document.getElementById('test-ekrani');
+            ekran.style.display = 'block';
+            
+            // Buraya öğrencinin soruları çözeceği, şıkları seçeceği ve 
+            // sonunda %40 sonucunu gösterecek mantığı JS ile kuruyoruz.
+            ekran.innerHTML = `<h1>Sınav Başladı...</h1>`; 
+            // (Detaylı JS mantığını bir sonraki adımda istersen kurabiliriz)
+        }
+    </script>
+</body>
+</html>
