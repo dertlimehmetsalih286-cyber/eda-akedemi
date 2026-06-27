@@ -3,10 +3,12 @@ import requests
 
 app = Flask(__name__)
 
-# Firebase REST API Linklerimiz
+# Firebase REST API Bağlantılarımız
 FIREBASE_USER_URL = "https://firestore.googleapis.com/v1/projects/edaakedemi-a9543/databases/(default)/documents/kullanicilar"
 FIREBASE_EVENT_URL = "https://firestore.googleapis.com/v1/projects/edaakedemi-a9543/databases/(default)/documents/etkinlikler"
 FIREBASE_TASK_URL = "https://firestore.googleapis.com/v1/projects/edaakedemi-a9543/databases/(default)/documents/gorevler"
+FIREBASE_QUIZ_URL = "https://firestore.googleapis.com/v1/projects/edaakedemi-a9543/databases/(default)/documents/quizler"
+FIREBASE_QUESTION_URL = "https://firestore.googleapis.com/v1/projects/edaakedemi-a9543/databases/(default)/documents/sorular"
 
 @app.route('/')
 def index():
@@ -74,7 +76,6 @@ def takvim():
     except Exception:
         return render_template('takvim.html', etkinlikler=[])
 
-# --- YENİ EKLENEN: GÖREVLERİ OKUMA ---
 @app.route('/gorev')
 def gorev():
     try:
@@ -92,7 +93,6 @@ def gorev():
                     "son_tarih": alanlar.get('son_tarih', {}).get('stringValue', ''),
                     "oncelik": alanlar.get('oncelik', {}).get('stringValue', '')
                 })
-        # Görevleri eklenme sırasına göre ters çevir (en yeni en üstte)
         gorevler.reverse()
         return render_template('gorev.html', gorevler=gorevler)
     except Exception:
@@ -102,38 +102,90 @@ def gorev():
 def kaynaklar():
     return render_template('kaynaklar.html')
 
+# --- YENİ EKLENEN: QUİZ VE SORU LİSTELEME ROTASI ---
 @app.route('/quiz')
 def quiz():
-    return render_template('quiz.html')
+    quizler = []
+    sorular = []
+    try:
+        # Quizleri Çek
+        res_q = requests.get(FIREBASE_QUIZ_URL)
+        if res_q.status_code == 200:
+            for doc in res_q.json().get('documents', []):
+                fields = doc.get('fields', {})
+                # Benzersiz Firebase Kimliğini Al
+                q_id = doc.get('name', '').split('/')[-1] 
+                quizler.append({
+                    "id": q_id,
+                    "baslik": fields.get('baslik', {}).get('stringValue', ''),
+                    "hafta": fields.get('hafta', {}).get('stringValue', ''),
+                    "sinav_turu": fields.get('sinav_turu', {}).get('stringValue', ''),
+                    "aciklama": fields.get('aciklama', {}).get('stringValue', '')
+                })
+        quizler.reverse() # En yeni quiz en üstte görünsün
 
+        # Soruları Çek
+        res_s = requests.get(FIREBASE_QUESTION_URL)
+        if res_s.status_code == 200:
+            for doc in res_s.json().get('documents', []):
+                fields = doc.get('fields', {})
+                sorular.append({
+                    "quiz_id": fields.get('quiz_id', {}).get('stringValue', ''),
+                    "soru_metni": fields.get('soru_metni', {}).get('stringValue', ''),
+                    "a": fields.get('a', {}).get('stringValue', ''),
+                    "b": fields.get('b', {}).get('stringValue', ''),
+                    "c": fields.get('c', {}).get('stringValue', ''),
+                    "d": fields.get('d', {}).get('stringValue', ''),
+                    "dogru": fields.get('dogru', {}).get('stringValue', ''),
+                    "cozum": fields.get('cozum', {}).get('stringValue', '')
+                })
+    except Exception as e:
+        pass
+
+    return render_template('quiz.html', quizler=quizler, sorular=sorular)
+
+# --- VERİTABANI KAYIT ROTALARI ---
 @app.route('/add-event', methods=['POST'])
 def add_event():
-    payload = {
-        "fields": {
-            "baslik": {"stringValue": request.form.get('baslik')},
-            "aciklama": {"stringValue": request.form.get('aciklama', '')},
-            "tarih": {"stringValue": request.form.get('tarih')},
-            "tur": {"stringValue": request.form.get('tur')}
-        }
-    }
+    payload = {"fields": {"baslik": {"stringValue": request.form.get('baslik')}, "aciklama": {"stringValue": request.form.get('aciklama', '')}, "tarih": {"stringValue": request.form.get('tarih')}, "tur": {"stringValue": request.form.get('tur')}}}
     requests.post(FIREBASE_EVENT_URL, json=payload)
     return redirect(url_for('takvim'))
 
-# --- YENİ EKLENEN: GÖREV KAYDETME ROTASI ---
 @app.route('/add-task', methods=['POST'])
 def add_task():
-    payload = {
-        "fields": {
-            "sinav_turu": {"stringValue": request.form.get('sinav_turu')},
-            "ders": {"stringValue": request.form.get('ders')},
-            "baslik": {"stringValue": request.form.get('baslik')},
-            "aciklama": {"stringValue": request.form.get('aciklama', '')},
-            "son_tarih": {"stringValue": request.form.get('son_tarih')},
-            "oncelik": {"stringValue": request.form.get('oncelik')}
-        }
-    }
+    payload = {"fields": {"sinav_turu": {"stringValue": request.form.get('sinav_turu')}, "ders": {"stringValue": request.form.get('ders')}, "baslik": {"stringValue": request.form.get('baslik')}, "aciklama": {"stringValue": request.form.get('aciklama', '')}, "son_tarih": {"stringValue": request.form.get('son_tarih')}, "oncelik": {"stringValue": request.form.get('oncelik')}}}
     requests.post(FIREBASE_TASK_URL, json=payload)
     return redirect(url_for('gorev'))
+
+@app.route('/add-quiz', methods=['POST'])
+def add_quiz():
+    payload = {
+        "fields": {
+            "baslik": {"stringValue": request.form.get('baslik')},
+            "hafta": {"stringValue": request.form.get('hafta')},
+            "sinav_turu": {"stringValue": request.form.get('sinav_turu')},
+            "aciklama": {"stringValue": request.form.get('aciklama', '')}
+        }
+    }
+    requests.post(FIREBASE_QUIZ_URL, json=payload)
+    return redirect(url_for('quiz'))
+
+@app.route('/add-question', methods=['POST'])
+def add_question():
+    payload = {
+        "fields": {
+            "quiz_id": {"stringValue": request.form.get('quiz_id')},
+            "soru_metni": {"stringValue": request.form.get('soru_metni')},
+            "a": {"stringValue": request.form.get('a')},
+            "b": {"stringValue": request.form.get('b')},
+            "c": {"stringValue": request.form.get('c')},
+            "d": {"stringValue": request.form.get('d')},
+            "dogru": {"stringValue": request.form.get('dogru')},
+            "cozum": {"stringValue": request.form.get('cozum', '')}
+        }
+    }
+    requests.post(FIREBASE_QUESTION_URL, json=payload)
+    return redirect(url_for('quiz'))
 
 if __name__ == '__main__':
     app.run(debug=True)
