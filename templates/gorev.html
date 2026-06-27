@@ -2,75 +2,32 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Eda Akademi - Görev Yönetimi</title>
     <style>
-        /* Genel Düzen ve Sabit Menü */
+        /* Standart Eda Akademi CSS'i */
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         body { display: flex; min-height: 100vh; background-color: #f8f9fc; }
-        .sidebar { width: 260px; background-color: white; border-right: 1px solid #e5e7eb; display: flex; flex-direction: column; padding: 20px 0; position: fixed; height: 100vh; }
+        .sidebar { width: 260px; background-color: white; border-right: 1px solid #e5e7eb; display: flex; flex-direction: column; padding: 20px 0; position: fixed; height: 100vh; top: 0; left: 0; z-index: 1000; }
         .logo-container { display: flex; align-items: center; padding: 0 20px 30px 20px; font-size: 22px; font-weight: bold; color: #111827; }
         .logo-icon { background-color: #7c3aed; width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-right: 15px; }
         .logo-icon svg { width: 24px; height: 24px; fill: white; }
         .nav-links { list-style: none; flex-grow: 1; }
         .nav-item { padding: 0 15px; margin-bottom: 5px; }
         .nav-link { display: flex; align-items: center; padding: 12px 20px; text-decoration: none; color: #4b5563; font-weight: 500; border-radius: 8px; transition: all 0.2s; }
-        .nav-link:hover { background-color: #f3f4f6; color: #111827; }
         .nav-link.active { background-color: #7c3aed; color: white; }
-        .nav-icon { margin-right: 15px; font-size: 18px; }
-        .logout-section { padding: 20px; border-top: 1px solid #e5e7eb; margin-top: auto; }
-        .logout-btn { color: #dc2626; text-decoration: none; font-size: 14px; font-weight: 500; display: flex; align-items: center; }
+        .nav-icon { margin-right: 15px; font-size: 18px; width: 24px; text-align: center; }
         
-        /* İçerik Alanı */
-        .main-content { flex-grow: 1; padding: 40px; margin-left: 260px; max-width: 900px; }
-        .page-header { margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center; }
-        .page-title { font-size: 28px; font-weight: bold; color: #111827; margin-bottom: 8px; }
-        .page-subtitle { color: #6b7280; font-size: 15px; }
-        .add-btn { background: #7c3aed; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 14px; }
-        
-        /* Filtre Butonları */
-        .filter-container { display: flex; gap: 10px; margin-bottom: 30px; }
-        .filter-btn { padding: 6px 16px; border-radius: 20px; border: 1px solid #e5e7eb; background: white; color: #4b5563; font-size: 14px; font-weight: 500; display: flex; align-items: center; gap: 8px; cursor: pointer; transition: all 0.2s; }
-        .filter-btn.active { background: #7c3aed; color: white; border-color: #7c3aed; }
-        .filter-badge { background: #f3f4f6; color: #4b5563; border-radius: 12px; padding: 2px 8px; font-size: 12px; font-weight: bold; }
-        .filter-btn.active .filter-badge { background: #f59e0b; color: white; }
-
-        /* Görev Kartları */
-        .task-card { background: white; padding: 20px; border-radius: 12px; border: 1px solid #e5e7eb; margin-bottom: 20px; position: relative; }
-        .task-tags { display: flex; gap: 10px; margin-bottom: 12px; align-items: center; }
-        .tag-exam { padding: 4px 10px; border-radius: 15px; font-size: 12px; font-weight: 600; }
-        .tag-yks { background: #fae8ff; color: #c026d3; }
-        .tag-lgs { background: #e0e7ff; color: #4f46e5; }
-        .tag-genel { background: #f3f4f6; color: #4b5563; }
-        .tag-subject { padding: 4px 10px; border-radius: 15px; font-size: 12px; font-weight: 500; background: #f3f4f6; color: #6b7280; display: flex; align-items: center; gap: 4px; }
-        .task-title { font-size: 18px; font-weight: 600; color: #111827; margin-bottom: 8px; }
-        .task-desc { font-size: 14px; color: #6b7280; margin-bottom: 15px; }
-        .task-footer { display: flex; gap: 15px; align-items: center; font-size: 13px; }
-        .priority { padding: 4px 10px; border-radius: 15px; font-weight: 600; }
-        .pri-Yüksek { background: #fee2e2; color: #ef4444; }
-        .pri-Orta { background: #fef08a; color: #ca8a04; }
-        .pri-Düşük { background: #dcfce7; color: #22c55e; }
-        .task-date { color: #6b7280; display: flex; align-items: center; gap: 5px; }
-        
-        /* Modal Penceresi */
-        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); z-index: 1000; }
-        .modal-box { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 30px; border-radius: 16px; width: 500px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+        .main-content { margin-left: 260px; padding: 40px; width: calc(100% - 260px); max-width: 1000px; }
+        .btn-purple { background: #7c3aed; color: white; border: none; padding: 10px 20px; border-radius: 8px; font-size: 14px; font-weight: bold; cursor: pointer; }
         .form-group { margin-bottom: 15px; }
-        .form-group label { display: block; margin-bottom: 5px; font-size: 14px; font-weight: 500; color: #374151; }
-        .form-control { width: 100%; padding: 10px 12px; border: 1px solid #d1d5db; border-radius: 8px; outline: none; font-size: 14px; }
-        .form-control:focus { border-color: #7c3aed; }
-        .form-row { display: flex; gap: 15px; }
-        .form-row .form-group { flex: 1; }
+        .form-control { width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 14px; }
     </style>
 </head>
 <body>
-
     <aside class="sidebar">
         <div class="logo-container">
-            <div class="logo-icon">
-                <svg viewBox="0 0 24 24"><path d="M12 3L1 9l4 2.18v6L12 21l7-3.82v-6l2.81-1.53L12 3zm6.82 6L12 12.72 5.18 9 12 5.28 18.82 9zM17 15.99l-5 2.73-5-2.73v-3.72l5 2.73 5-2.73v3.72z"/></svg>
-            </div>
-            EduBoard
+            <div class="logo-icon"><svg viewBox="0 0 24 24"><path d="M12 3L1 9l4 2.18v6L12 21l7-3.82v-6l2.81-1.53L12 3zm6.82 6L12 12.72 5.18 9 12 5.28 18.82 9zM17 15.99l-5 2.73-5-2.73v-3.72l5 2.73 5-2.73v3.72z"/></svg></div>
+            Eda Akademi
         </div>
         <ul class="nav-links">
             <li class="nav-item"><a href="/ogretmen" class="nav-link"><span class="nav-icon">⊞</span> Dashboard</a></li>
@@ -80,185 +37,79 @@
             <li class="nav-item"><a href="/kaynaklar" class="nav-link"><span class="nav-icon">📚</span> Kaynaklar</a></li>
             <li class="nav-item"><a href="/ogrenciler" class="nav-link"><span class="nav-icon">👥</span> Öğrenciler</a></li>
         </ul>
-        <div class="logout-section"><a href="/" class="logout-btn">↪ Çıkış Yap</a></div>
     </aside>
 
     <main class="main-content">
-        <div class="page-header">
-            <div>
-                <h1 class="page-title">Görev Yönetimi</h1>
-                <p class="page-subtitle">LGS ve YKS öğrencileri için konu bazlı görev oluştur.</p>
-            </div>
-            <button onclick="document.getElementById('gorevModal').style.display='block'" class="add-btn">+ Görev Ekle</button>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:30px;">
+            <h1 style="color:#111827;">Görev Yönetimi</h1>
+            <button class="btn-purple" onclick="document.getElementById('gorevModal').style.display='block'">+ Yeni Görev</button>
         </div>
 
-        <div class="filter-container">
-            <div class="filter-btn active" id="btn-lgs" onclick="kategoriDegistir('LGS')">LGS <span class="filter-badge" id="badge-lgs">0</span></div>
-            <div class="filter-btn" id="btn-yks" onclick="kategoriDegistir('YKS')">YKS <span class="filter-badge" id="badge-yks">0</span></div>
-            <div class="filter-btn" id="btn-genel" onclick="kategoriDegistir('Genel')">Genel <span class="filter-badge" id="badge-genel">0</span></div>
-        </div>
-
-        <div id="gorev-listesi">
-            {% if gorevler|length == 0 %}
-                <div style="text-align:center; padding:40px; color:#6b7280; border:1px dashed #d1d5db; border-radius:12px;">
-                    Henüz hiç görev oluşturmadın. Sağ üstten "Görev Ekle" butonuna basarak başlayabilirsin.
-                </div>
-            {% else %}
-                {% for gorev in gorevler %}
-                <div class="task-card" data-tur="{{ gorev.sinav_turu }}">
-                    <div class="task-tags">
-                        {% if gorev.sinav_turu == 'YKS' %}
-                            <span class="tag-exam tag-yks">{{ gorev.sinav_turu }}</span>
-                        {% elif gorev.sinav_turu == 'LGS' %}
-                            <span class="tag-exam tag-lgs">{{ gorev.sinav_turu }}</span>
-                        {% else %}
-                            <span class="tag-exam tag-genel">{{ gorev.sinav_turu }}</span>
-                        {% endif %}
-                        
-                        <span class="tag-subject">📖 {{ gorev.ders }}</span>
-                    </div>
-                    <h3 class="task-title">{{ gorev.baslik }}</h3>
-                    <p class="task-desc">{{ gorev.aciklama }}</p>
-                    
-                    <div class="task-footer">
-                        <span class="priority pri-{{ gorev.oncelik }}">{{ gorev.oncelik }}</span>
-                        <span class="task-date">📅 {{ gorev.son_tarih }}</span>
-                    </div>
-                </div>
-                {% endfor %}
-            {% endif %}
-        </div>
-        
-        <div id="bos-uyari" style="display:none; text-align:center; padding:40px; color:#6b7280; border:1px dashed #d1d5db; border-radius:12px;">
-            Bu kategoride henüz görev bulunmuyor.
-        </div>
-
-    </main>
-
-    <div id="gorevModal" class="modal-overlay">
-        <div class="modal-box">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-                <h2 style="font-size:20px; color:#111827;">Yeni Görev</h2>
-                <button onclick="document.getElementById('gorevModal').style.display='none'" style="border:none; background:none; font-size:24px; cursor:pointer; color:#6b7280;">&times;</button>
-            </div>
-            
-            <form action="/add-task" method="POST">
-                <div class="form-group">
-                    <label>Sınav Türü</label>
-                    <select name="sinav_turu" id="modal-sinav-turu" class="form-control" style="background:#f8f9fc;">
-                        <option value="LGS">🏫 LGS</option>
-                        <option value="YKS">🎓 YKS</option>
-                        <option value="Genel">📚 Genel</option>
-                    </select>
+        <div id="gorevModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:9999;">
+            <div style="background:white; max-width:500px; margin:50px auto; padding:30px; border-radius:16px;">
+                <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
+                    <h2>Yeni Görev</h2>
+                    <span onclick="document.getElementById('gorevModal').style.display='none'" style="cursor:pointer; font-size:20px;">&times;</span>
                 </div>
                 
-                <div class="form-group">
-                    <label>Ders</label>
-                    <select name="ders" class="form-control">
-                        <option value="Ders seç" disabled selected>Ders seç</option>
-                        <option value="TYT Türkçe">TYT Türkçe</option>
-                        <option value="TYT Matematik">TYT Matematik</option>
-                        <option value="TYT Tarih">TYT Tarih</option>
-                        <option value="Fen Bilimleri">Fen Bilimleri</option>
-                        <option value="Sosyal Bilgiler">Sosyal Bilgiler</option>
-                    </select>
-                </div>
+                <form action="/add-task" method="POST">
+                    <div class="form-group">
+                        <label>Sınav Türü</label>
+                        <select name="sinav_turu" class="form-control">
+                            <option value="LGS">LGS</option>
+                            <option value="YKS">YKS</option>
+                            <option value="Ara Sınıf">Ara Sınıf</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Ders</label>
+                        <select name="ders" class="form-control">
+                            <option value="TYT Türkçe">TYT Türkçe</option>
+                            <option value="TYT Matematik">TYT Matematik</option>
+                            <option value="TYT Tarih">TYT Tarih</option>
+                            <option value="AYT Matematik">AYT Matematik</option>
+                            <option value="AYT Tarih">AYT Tarih</option>
+                            <option value="AYT Coğrafya">AYT Coğrafya</option>
+                            <option value="Fizik">Fizik</option>
+                            <option value="Kimya">Kimya</option>
+                            <option value="Biyoloji">Biyoloji</option>
+                            <option value="Fen Bilimleri">Fen Bilimleri</option>
+                            <option value="Sosyal Bilgiler">Sosyal Bilgiler</option>
+                            <option value="Tarih">Tarih</option>
+                            <option value="Coğrafya">Coğrafya</option>
+                            <option value="Felsefe">Felsefe</option>
+                            <option value="Din Kültürü">Din Kültürü</option>
+                        </select>
+                    </div>
 
-                <div class="form-group">
-                    <label>Görev Başlığı</label>
-                    <input type="text" name="baslik" class="form-control" placeholder="Görev başlığı..." required>
-                </div>
-
-                <div class="form-group">
-                    <label>Açıklama (opsiyonel)</label>
-                    <textarea name="aciklama" class="form-control" placeholder="Görev açıklaması, soru numaraları, vb..." style="height:80px; resize:none;"></textarea>
-                </div>
-
-                <div class="form-row">
+                    <div class="form-group">
+                        <label>Başlık</label>
+                        <input type="text" name="baslik" class="form-control" required>
+                    </div>
+                    
                     <div class="form-group">
                         <label>Son Tarih</label>
-                        <input type="date" name="son_tarih" class="form-control" required>
+                        <input type="date" name="son_tarih" class="form-control">
                     </div>
+                    
                     <div class="form-group">
                         <label>Öncelik</label>
                         <select name="oncelik" class="form-control">
-                            <option value="Düşük">Düşük</option>
-                            <option value="Orta" selected>Orta</option>
                             <option value="Yüksek">Yüksek</option>
+                            <option value="Orta">Orta</option>
+                            <option value="Düşük">Düşük</option>
                         </select>
                     </div>
-                </div>
 
-                <button type="submit" class="add-btn" style="width:100%; padding:12px; font-size:15px; margin-top:10px;">Görev Ekle</button>
-            </form>
+                    <button type="submit" class="btn-purple" style="width:100%; margin-top:10px;">Görev Ekle</button>
+                </form>
+            </div>
         </div>
-    </div>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Bugünün tarihini varsayılan olarak takvime ekle
-            const bugun = new Date().toISOString().split('T')[0];
-            document.querySelector('input[name="son_tarih"]').value = bugun;
-
-            // Kartları ve rozetleri say
-            const kartlar = document.querySelectorAll('.task-card');
-            let sayac = { 'LGS': 0, 'YKS': 0, 'Genel': 0 };
-
-            kartlar.forEach(kart => {
-                let tur = kart.getAttribute('data-tur');
-                if(sayac[tur] !== undefined) {
-                    sayac[tur]++;
-                }
-            });
-
-            // Rozet (badge) sayılarını güncelle
-            document.getElementById('badge-lgs').innerText = sayac['LGS'];
-            document.getElementById('badge-yks').innerText = sayac['YKS'];
-            document.getElementById('badge-genel').innerText = sayac['Genel'];
-
-            // Sayfa açıldığında varsayılan olarak LGS sekmesini aç
-            kategoriDegistir('LGS');
-        });
-
-        function kategoriDegistir(secilenTur) {
-            // 1. Tüm butonların aktifliğini kaldır
-            const butonlar = document.querySelectorAll('.filter-btn');
-            butonlar.forEach(btn => {
-                btn.classList.remove('active');
-                btn.querySelector('.filter-badge').style.background = '#f3f4f6';
-                btn.querySelector('.filter-badge').style.color = 'gray';
-            });
-
-            // 2. Tıklanan butonu aktif yap ve turuncu renk ver
-            const aktifButon = document.getElementById('btn-' + secilenTur.toLowerCase());
-            aktifButon.classList.add('active');
-            aktifButon.querySelector('.filter-badge').style.background = '#f59e0b';
-            aktifButon.querySelector('.filter-badge').style.color = 'white';
-
-            // 3. Modal'da "Sınav Türü" seçimini otomatik olarak o sekmeye ayarla
-            document.getElementById('modal-sinav-turu').value = secilenTur;
-
-            // 4. Kartları gizle veya göster
-            const kartlar = document.querySelectorAll('.task-card');
-            let gorunenKartSayisi = 0;
-
-            kartlar.forEach(kart => {
-                if(kart.getAttribute('data-tur') === secilenTur) {
-                    kart.style.display = 'block';
-                    gorunenKartSayisi++;
-                } else {
-                    kart.style.display = 'none';
-                }
-            });
-
-            // 5. Eğer seçilen kategoride hiç kart yoksa uyarı mesajı göster
-            const uyari = document.getElementById('bos-uyari');
-            if(gorunenKartSayisi === 0 && kartlar.length > 0) {
-                uyari.style.display = 'block';
-            } else {
-                uyari.style.display = 'none';
-            }
-        }
-    </script>
+        <div style="background:white; padding:30px; border-radius:16px; border:1px solid #e5e7eb;">
+            <p style="color:gray;">Burada eklenen görevler listelenecek...</p>
+        </div>
+    </main>
 </body>
 </html>
