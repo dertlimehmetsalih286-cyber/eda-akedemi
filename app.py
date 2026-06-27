@@ -95,7 +95,47 @@ def ogrenciler():
         return render_template('ogrenciler.html', ogrenciler=ogrenci_listesi, toplam_ogrenci=toplam_ogrenci, en_yuksek_puan=en_yuksek_puan, toplam_tamamlanan=toplam_tamamlanan)
     except: return render_template('ogrenciler.html', ogrenciler=[], toplam_ogrenci=0, en_yuksek_puan=0, toplam_tamamlanan=0)
 
-# İŞTE EKSİK OLAN TAKVİM ROTASI BURADA!
+# YENİ: YAPAY ZEKA DESTEKLİ ANALİZ ROTASI
+@app.route('/ogretmen_analiz')
+def ogretmen_analiz():
+    if session.get('rol') != 'ogretmen': return redirect(url_for('index'))
+    try:
+        cevap = requests.get(FIREBASE_USER_URL)
+        ogrenciler = []
+        toplam_puan = 0
+        if cevap.status_code == 200:
+            for doc in cevap.json().get('documents', []):
+                alanlar = doc.get('fields', {})
+                if alanlar.get('rol', {}).get('stringValue') == 'ogrenci':
+                    p_val = alanlar.get('puan', {})
+                    puan = int(p_val.get('integerValue', p_val.get('stringValue', '0')))
+                    toplam_puan += puan
+                    ogrenciler.append({"isim": alanlar.get('isim', {}).get('stringValue', 'Öğrenci'), "puan": puan})
+        
+        ogrenci_sayisi = len(ogrenciler)
+        ortalama = (toplam_puan / ogrenci_sayisi) if ogrenci_sayisi > 0 else 0
+        sirali = sorted(ogrenciler, key=lambda x: x['puan'], reverse=True)
+        
+        en_iyi = sirali[0]['isim'] if ogrenci_sayisi > 0 else "Yok"
+        en_dusuk = sirali[-1]['isim'] if ogrenci_sayisi > 0 else "Yok"
+        
+        # Akıllı İçgörü Üretme Algoritması
+        tavsiyeler = []
+        if ortalama < 30:
+            tavsiyeler.append("Sınıfın genel başarı ortalaması zayıf görünüyor. Konu anlatımlarını pekiştirmek amacıyla <b>Kaynaklar</b> bölümüne yeni dökümanlar yüklemeniz ve kolay seviye görevler vermeniz önerilir.")
+        elif ortalama < 60:
+            tavsiyeler.append("Sınıf performansı dengeli ve orta düzeyde ilerliyor. Öğrencilerin eksik konularını kapatmak için <b>Quiz Yönetimi</b> kısmından yeni tarama testleri oluşturabilirsiniz.")
+        else:
+            tavsiyeler.append("Harika! Sınıf ortalaması mükemmel durumda. Öğrencilerin rekabet duygusunu ve ilgisini canlı tutmak için yeni nesil zor seviye YKS/LGS görevleri ekleyebilirsiniz.")
+        
+        if ogrenci_sayisi > 0:
+            tavsiyeler.append(f"🔥 Haftanın en yüksek performans gösteren parlayan yıldızı: <b>{en_iyi}</b>. Sınıf önünde tebrik edilerek motivasyonu artırılabilir.")
+            tavsiyeler.append(f"⚠️ Yakın takip gerektiren öğrenci: <b>{en_dusuk}</b>. Bu öğrencinin çözemediği akıllı testleri ve boş bıraktığı ödevleri inceleyerek özel rehberlik yapılması tavsiye edilir.")
+            
+        return render_template('ogretmen_analiz.html', tavsiyeler=tavsiyeler, ortalama=int(ortalama), en_iyi=en_iyi, en_dusuk=en_dusuk, toplam_ogrenci=ogrenci_sayisi)
+    except:
+        return render_template('ogretmen_analiz.html', tavsiyeler=["Veritabanı hatası nedeniyle analiz yapılamadı."], ortalama=0, en_iyi="Yok", en_dusuk="Yok", toplam_ogrenci=0)
+
 @app.route('/takvim')
 def takvim():
     try:
@@ -153,7 +193,6 @@ def add_resource(): requests.post(FIREBASE_RESOURCE_URL, json={"fields": {"basli
 
 @app.route('/ogrenci')
 def ogrenci_dashboard(): return render_template('ogrenci_dashboard.html') if session.get('rol') == 'ogrenci' else redirect(url_for('index'))
-
 @app.route('/ogrenci_takvim')
 def ogrenci_takvim():
     try:
@@ -161,16 +200,13 @@ def ogrenci_takvim():
         etkinlikler = [{"baslik": d.get('fields', {}).get('baslik', {}).get('stringValue', ''), "aciklama": d.get('fields', {}).get('aciklama', {}).get('stringValue', ''), "tarih": d.get('fields', {}).get('tarih', {}).get('stringValue', ''), "tur": d.get('fields', {}).get('tur', {}).get('stringValue', '')} for d in cevap.json().get('documents', [])] if cevap.status_code == 200 else []
         return render_template('ogrenci_takvim.html', etkinlikler=etkinlikler)
     except: return render_template('ogrenci_takvim.html', etkinlikler=[])
-
 @app.route('/ogrenci_gorevler')
 def ogrenci_gorevler():
     try:
         cevap = requests.get(FIREBASE_TASK_URL)
         gorevler = [{"id": d.get('name', '').split('/')[-1], "sinav_turu": d.get('fields', {}).get('sinav_turu', {}).get('stringValue', ''), "ders": d.get('fields', {}).get('ders', {}).get('stringValue', ''), "baslik": d.get('fields', {}).get('baslik', {}).get('stringValue', ''), "aciklama": d.get('fields', {}).get('aciklama', {}).get('stringValue', ''), "son_tarih": d.get('fields', {}).get('son_tarih', {}).get('stringValue', ''), "oncelik": d.get('fields', {}).get('oncelik', {}).get('stringValue', '')} for d in cevap.json().get('documents', [])] if cevap.status_code == 200 else []
-        gorevler.reverse()
-        return render_template('ogrenci_gorevler.html', gorevler=gorevler)
+        gorevler.reverse(); return render_template('ogrenci_gorevler.html', gorevler=gorevler)
     except: return render_template('ogrenci_gorevler.html', gorevler=[])
-
 @app.route('/ogrenci_testler')
 def ogrenci_testler():
     quizler, sorular = [], []
@@ -181,16 +217,13 @@ def ogrenci_testler():
         if res_s.status_code == 200: sorular = [{"quiz_id": d.get('fields', {}).get('quiz_id', {}).get('stringValue', ''), "soru_metni": d.get('fields', {}).get('soru_metni', {}).get('stringValue', ''), "a": d.get('fields', {}).get('a', {}).get('stringValue', ''), "b": d.get('fields', {}).get('b', {}).get('stringValue', ''), "c": d.get('fields', {}).get('c', {}).get('stringValue', ''), "d": d.get('fields', {}).get('d', {}).get('stringValue', ''), "dogru": d.get('fields', {}).get('dogru', {}).get('stringValue', ''), "cozum": d.get('fields', {}).get('cozum', {}).get('stringValue', '')} for d in res_s.json().get('documents', [])]
     except: pass
     return render_template('ogrenci_testler.html', quizler=quizler, sorular=sorular)
-
 @app.route('/ogrenci_kaynaklar')
 def ogrenci_kaynaklar():
     try:
         cevap = requests.get(FIREBASE_RESOURCE_URL)
         k_list = [{"baslik": d.get('fields', {}).get('baslik', {}).get('stringValue', ''), "aciklama": d.get('fields', {}).get('aciklama', {}).get('stringValue', ''), "tur": d.get('fields', {}).get('tur', {}).get('stringValue', ''), "url": d.get('fields', {}).get('url', {}).get('stringValue', '')} for d in cevap.json().get('documents', [])] if cevap.status_code == 200 else []
-        k_list.reverse()
-        return render_template('ogrenci_kaynaklar.html', kaynaklar=k_list)
+        k_list.reverse(); return render_template('ogrenci_kaynaklar.html', kaynaklar=k_list)
     except: return render_template('ogrenci_kaynaklar.html', kaynaklar=[])
-
 @app.route('/ogrenci_siralama')
 def ogrenci_siralama():
     try:
