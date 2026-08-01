@@ -33,8 +33,10 @@
         .days .today { background: #10b981; color: white; box-shadow: 0 4px 6px rgba(16, 185, 129, 0.2); }
         .days .empty { background: transparent; }
 
+        /* Görev Listesi */
         .task-list { background: white; padding: 30px; border-radius: 16px; border: 1px solid #e5e7eb; }
-        .task-item { display: flex; justify-content: space-between; align-items: center; padding: 15px; border-bottom: 1px solid #f3f4f6; }
+        .task-item { display: flex; justify-content: space-between; align-items: center; padding: 15px; border-bottom: 1px solid #f3f4f6; cursor: pointer; transition: all 0.2s; }
+        .task-item:hover { background: #f9fafb; border-radius: 8px; padding-left: 20px; } /* Üzerine gelince efekti */
         .task-item:last-child { border-bottom: none; }
         .t-info h4 { color: #111827; margin-bottom: 4px; }
         .t-info p { color: #6b7280; font-size: 13px; display: flex; gap: 10px; }
@@ -72,9 +74,12 @@
         </div>
 
         <div class="task-list">
-            <h3 style="margin-bottom: 20px; color: #111827;">Öğretmeninin Atadığı Görevler</h3>
+            <h3 style="margin-bottom: 10px; color: #111827;">Öğretmeninin Atadığı Görevler</h3>
+            <p style="font-size: 13px; color: gray; margin-bottom: 20px;">Detayları görmek ve puan kazanmak için görevlerin üzerine tıkla.</p>
+            
             {% for g in gorevler %}
-            <div class="task-item">
+            <!-- Görevin üzerine tıklandığında Modal'ı açar ve bilgileri gönderir -->
+            <div class="task-item" onclick="openTaskModal('{{ g.id }}', '{{ g.baslik }}', '{{ g.ders }}', '{{ g.sinav_turu }}', '{{ g.son_tarih }}', '{{ g.oncelik }}')">
                 <div class="t-info">
                     <h4>{{ g.baslik }}</h4>
                     <p>
@@ -91,7 +96,33 @@
         </div>
     </main>
 
+    <!-- Görev Detay ve Tamamlama Penceresi (Modal) -->
+    <div id="taskModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:9999;">
+        <div style="background:white; max-width:550px; margin:100px auto; padding:30px; border-radius:16px; position:relative; box-shadow: 0 10px 25px rgba(0,0,0,0.1);">
+            
+            <!-- Kapatma İkonu (Sol Üst) -->
+            <span onclick="document.getElementById('taskModal').style.display='none'" style="cursor:pointer; font-size:24px; position:absolute; top:20px; left:20px; color:#9ca3af; font-weight:bold;">&times;</span>
+            
+            <!-- TAMAMLA BUTONU (Sağ Üst) -->
+            <button onclick="tamamlaGorev()" id="btnTamamla" style="position:absolute; top:20px; right:20px; background:#10b981; color:white; border:none; padding:10px 18px; border-radius:8px; font-weight:bold; cursor:pointer; font-size:14px; transition: 0.2s;">✓ Tamamla</button>
+            
+            <!-- Görev İçeriği -->
+            <h2 id="m_baslik" style="margin-top: 40px; margin-bottom: 20px; color: #111827; font-size: 22px;"></h2>
+            
+            <div style="background: #f9fafb; padding: 20px; border-radius: 12px; border: 1px solid #e5e7eb;">
+                <p style="margin-bottom: 12px; color: #4b5563; font-size: 15px;"><strong>📚 Ders:</strong> <span id="m_ders" style="color: #111827;"></span></p>
+                <p style="margin-bottom: 12px; color: #4b5563; font-size: 15px;"><strong>📝 Sınav Türü:</strong> <span id="m_tur" style="color: #111827;"></span></p>
+                <p style="margin-bottom: 12px; color: #4b5563; font-size: 15px;"><strong>⚡ Öncelik:</strong> <span id="m_oncelik" style="color: #111827;"></span></p>
+                <p style="color: #4b5563; font-size: 15px;"><strong>⏳ Son Teslim Tarihi:</strong> <span id="m_tarih" style="color: #ef4444; font-weight: bold;"></span></p>
+            </div>
+            
+            <!-- Başarı Mesajı (Tıklandıktan Sonra Görünür) -->
+            <p id="basariMesaji" style="display:none; color: #10b981; text-align: center; margin-top: 20px; font-size: 16px; font-weight: bold;">🎉 Tebrikler! Görevi tamamladın ve hesabına +10 Puan eklendi!</p>
+        </div>
+    </div>
+
     <script>
+        // Takvim Oluşturma Motoru
         let dt = new Date();
         function renderDate() {
             dt.setDate(1);
@@ -115,6 +146,46 @@
             renderDate();
         }
         renderDate();
+
+        // ----------------------------------------------------
+        // GÖREV TIKLAMA VE TAMAMLAMA (PUAN KAZANMA) SİSTEMİ
+        // ----------------------------------------------------
+        
+        function openTaskModal(id, baslik, ders, tur, tarih, oncelik) {
+            // Bilgileri Modal'a Yerleştir
+            document.getElementById('m_baslik').innerText = baslik;
+            document.getElementById('m_ders').innerText = ders;
+            document.getElementById('m_tur').innerText = tur;
+            document.getElementById('m_tarih').innerText = tarih;
+            document.getElementById('m_oncelik').innerText = oncelik;
+            
+            // Pencereyi her açtığımızda buton görünür olsun, mesaj gizli olsun
+            document.getElementById('basariMesaji').style.display = 'none';
+            document.getElementById('btnTamamla').style.display = 'block';
+            
+            // Modal'ı Göster
+            document.getElementById('taskModal').style.display = 'block';
+        }
+
+        function tamamlaGorev() {
+            // Arka planda app.py içindeki /puan_ekle rotasına istek atar
+            fetch('/puan_ekle', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ puan: 10 }) // Tamamlanan her görev 10 puan
+            })
+            .then(response => response.json())
+            .then(data => {
+                if(data.status === 'success') {
+                    // Butonu Gizle ve Tebrik Mesajını Göster
+                    document.getElementById('btnTamamla').style.display = 'none';
+                    document.getElementById('basariMesaji').style.display = 'block';
+                } else {
+                    alert("Sistemsel bir hata oluştu, puanın eklenemedi.");
+                }
+            })
+            .catch(err => alert("İnternet bağlantını kontrol et."));
+        }
     </script>
 </body>
 </html>
