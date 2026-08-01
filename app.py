@@ -1,5 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, session
 import requests
+from apscheduler.schedulers.background import BackgroundScheduler
+import datetime
 
 app = Flask(__name__)
 app.secret_key = "eda_akademi_super_gizli_anahtar"
@@ -95,7 +97,6 @@ def ogrenciler():
         return render_template('ogrenciler.html', ogrenciler=ogrenci_listesi, toplam_ogrenci=toplam_ogrenci, en_yuksek_puan=en_yuksek_puan, toplam_tamamlanan=toplam_tamamlanan)
     except: return render_template('ogrenciler.html', ogrenciler=[], toplam_ogrenci=0, en_yuksek_puan=0, toplam_tamamlanan=0)
 
-# YENİ: YAPAY ZEKA DESTEKLİ ANALİZ ROTASI
 @app.route('/ogretmen_analiz')
 def ogretmen_analiz():
     if session.get('rol') != 'ogretmen': return redirect(url_for('index'))
@@ -119,7 +120,6 @@ def ogretmen_analiz():
         en_iyi = sirali[0]['isim'] if ogrenci_sayisi > 0 else "Yok"
         en_dusuk = sirali[-1]['isim'] if ogrenci_sayisi > 0 else "Yok"
         
-        # Akıllı İçgörü Üretme Algoritması
         tavsiyeler = []
         if ortalama < 30:
             tavsiyeler.append("Sınıfın genel başarı ortalaması zayıf görünüyor. Konu anlatımlarını pekiştirmek amacıyla <b>Kaynaklar</b> bölümüne yeni dökümanlar yüklemeniz ve kolay seviye görevler vermeniz önerilir.")
@@ -136,12 +136,12 @@ def ogretmen_analiz():
     except:
         return render_template('ogretmen_analiz.html', tavsiyeler=["Veritabanı hatası nedeniyle analiz yapılamadı."], ortalama=0, en_iyi="Yok", en_dusuk="Yok", toplam_ogrenci=0)
 
+# TAKVİM VE GÖREVLER (BİRLEŞTİRİLDİ - /gorev ROTASI SİLİNDİ)
 @app.route('/takvim')
 def takvim():
     if session.get('rol') != 'ogretmen': return redirect(url_for('index'))
     gorevler = []
     try:
-        # Takvim sayfasında listelemek için görevleri çekiyoruz
         cevap = requests.get(FIREBASE_TASK_URL)
         if cevap.status_code == 200:
             for d in cevap.json().get('documents', []):
@@ -155,22 +155,14 @@ def takvim():
                 })
         gorevler.reverse()
     except: pass
-    
     return render_template('takvim.html', gorevler=gorevler)
-
-# =========================================================================
-# QUİZ YÖNETİMİ VE SONUÇLAR
-# =========================================================================
 
 @app.route('/quiz')
 def quiz():
     if session.get('rol') != 'ogretmen': return redirect(url_for('index'))
-    
     quizler = []
     sorular = []
-    
     try:
-        # Quizleri Çek
         res_q = requests.get(FIREBASE_QUIZ_URL)
         if res_q.status_code == 200:
             for d in res_q.json().get('documents', []):
@@ -179,7 +171,6 @@ def quiz():
                     "baslik": d.get('fields', {}).get('baslik', {}).get('stringValue', 'İsimsiz Quiz')
                 })
         
-        # Soruları Çek
         res_s = requests.get(FIREBASE_QUESTION_URL)
         if res_s.status_code == 200:
             for d in res_s.json().get('documents', []):
@@ -189,27 +180,21 @@ def quiz():
                     "soru_metni": f.get('soru_metni', {}).get('stringValue', 'Soru metni yok')
                 })
     except: pass
-    
     return render_template('quiz.html', quizler=quizler, sorular=sorular)
 
 @app.route('/quiz_sonuclari/<quiz_id>')
 def quiz_sonuclari(quiz_id):
-    if session.get('rol') != 'ogretmen': 
-        return redirect(url_for('index'))
-    
+    if session.get('rol') != 'ogretmen': return redirect(url_for('index'))
     quiz_baslik = "Quiz Detayı"
     sorular = []
     ogrenciler = []
-    
     try:
-        # Quiz Başlığını Bul
         res_q = requests.get(FIREBASE_QUIZ_URL)
         if res_q.status_code == 200:
             for d in res_q.json().get('documents', []):
                 if d.get('name', '').split('/')[-1] == quiz_id:
                     quiz_baslik = d.get('fields', {}).get('baslik', {}).get('stringValue', 'İsimsiz Quiz')
         
-        # Soruları Çek (Cevap Anahtarı için)
         res_s = requests.get(FIREBASE_QUESTION_URL)
         if res_s.status_code == 200:
             for d in res_s.json().get('documents', []):
@@ -221,7 +206,6 @@ def quiz_sonuclari(quiz_id):
                         "cozum": f.get('cozum', {}).get('stringValue', '')
                     })
         
-        # Öğrencileri Çek
         res_u = requests.get(FIREBASE_USER_URL)
         if res_u.status_code == 200:
             for doc in res_u.json().get('documents', []):
@@ -233,7 +217,6 @@ def quiz_sonuclari(quiz_id):
                     })
             ogrenciler = sorted(ogrenciler, key=lambda x: x['puan'], reverse=True)
     except: pass
-    
     return render_template('quiz_sonuclari.html', quiz_id=quiz_id, quiz_baslik=quiz_baslik, sorular=sorular, ogrenciler=ogrenciler)
 
 @app.route('/kaynaklar')
@@ -247,12 +230,20 @@ def kaynaklar():
 
 # --- ÖĞRETMEN VERİ EKLEME POST İŞLEMLERİ ---
 @app.route('/add-event', methods=['POST'])
-def add_event(): requests.post(FIREBASE_EVENT_URL, json={"fields": {"baslik": {"stringValue": request.form.get('baslik')}, "aciklama": {"stringValue": request.form.get('aciklama', '')}, "tarih": {"stringValue": request.form.get('tarih')}, "tur": {"stringValue": request.form.get('tur')}}}); return redirect(url_for('takvim'))@app.route('/add-task', methods=['POST'])
-def add_task(): requests.post(FIREBASE_TASK_URL, json={"fields": {"sinav_turu": {"stringValue": request.form.get('sinav_turu')}, "ders": {"stringValue": request.form.get('ders')}, "baslik": {"stringValue": request.form.get('baslik')}, "aciklama": {"stringValue": request.form.get('aciklama', '')}, "son_tarih": {"stringValue": request.form.get('son_tarih')}, "oncelik": {"stringValue": request.form.get('oncelik')}}}); return redirect(url_for('gorev'))
+def add_event(): requests.post(FIREBASE_EVENT_URL, json={"fields": {"baslik": {"stringValue": request.form.get('baslik')}, "aciklama": {"stringValue": request.form.get('aciklama', '')}, "tarih": {"stringValue": request.form.get('tarih')}, "tur": {"stringValue": request.form.get('tur')}}}); return redirect(url_for('takvim'))
+
+@app.route('/add-task', methods=['POST'])
+def add_task(): 
+    requests.post(FIREBASE_TASK_URL, json={"fields": {"sinav_turu": {"stringValue": request.form.get('sinav_turu')}, "ders": {"stringValue": request.form.get('ders')}, "baslik": {"stringValue": request.form.get('baslik')}, "aciklama": {"stringValue": request.form.get('aciklama', '')}, "son_tarih": {"stringValue": request.form.get('son_tarih')}, "oncelik": {"stringValue": request.form.get('oncelik')}}})
+    # GÖREV EKLENİNCE ARTIK TAKVİME YÖNLENDİRİYORUZ
+    return redirect(url_for('takvim'))
+
 @app.route('/add-quiz', methods=['POST'])
 def add_quiz(): requests.post(FIREBASE_QUIZ_URL, json={"fields": {"baslik": {"stringValue": request.form.get('baslik')}, "hafta": {"stringValue": request.form.get('hafta')}, "sinav_turu": {"stringValue": request.form.get('sinav_turu')}, "aciklama": {"stringValue": request.form.get('aciklama', '')}}}); return redirect(url_for('quiz'))
+
 @app.route('/add-question', methods=['POST'])
 def add_question(): requests.post(FIREBASE_QUESTION_URL, json={"fields": {"quiz_id": {"stringValue": request.form.get('quiz_id')}, "soru_metni": {"stringValue": request.form.get('soru_metni')}, "a": {"stringValue": request.form.get('a')}, "b": {"stringValue": request.form.get('b')}, "c": {"stringValue": request.form.get('c')}, "d": {"stringValue": request.form.get('d')}, "dogru": {"stringValue": request.form.get('dogru')}, "cozum": {"stringValue": request.form.get('cozum', '')}}}); return redirect(url_for('quiz'))
+
 @app.route('/add-resource', methods=['POST'])
 def add_resource(): requests.post(FIREBASE_RESOURCE_URL, json={"fields": {"baslik": {"stringValue": request.form.get('baslik')}, "aciklama": {"stringValue": request.form.get('aciklama', '')}, "tur": {"stringValue": request.form.get('tur')}, "url": {"stringValue": request.form.get('url')}}}); return redirect(url_for('kaynaklar'))
 
@@ -275,7 +266,7 @@ def ogrenci_gorevler():
     try:
         cevap = requests.get(FIREBASE_TASK_URL)
         gorevler = [{"id": d.get('name', '').split('/')[-1], "sinav_turu": d.get('fields', {}).get('sinav_turu', {}).get('stringValue', ''), "ders": d.get('fields', {}).get('ders', {}).get('stringValue', ''), "baslik": d.get('fields', {}).get('baslik', {}).get('stringValue', ''), "aciklama": d.get('fields', {}).get('aciklama', {}).get('stringValue', ''), "son_tarih": d.get('fields', {}).get('son_tarih', {}).get('stringValue', ''), "oncelik": d.get('fields', {}).get('oncelik', {}).get('stringValue', '')} for d in cevap.json().get('documents', [])] if cevap.status_code == 200 else []
-        gorevler.reverse();
+        gorevler.reverse()
         return render_template('ogrenci_gorevler.html', gorevler=gorevler)
     except: return render_template('ogrenci_gorevler.html', gorevler=[])
 @app.route('/ogrenci_testler')
@@ -293,7 +284,7 @@ def ogrenci_kaynaklar():
     try:
         cevap = requests.get(FIREBASE_RESOURCE_URL)
         k_list = [{"baslik": d.get('fields', {}).get('baslik', {}).get('stringValue', ''), "aciklama": d.get('fields', {}).get('aciklama', {}).get('stringValue', ''), "tur": d.get('fields', {}).get('tur', {}).get('stringValue', ''), "url": d.get('fields', {}).get('url', {}).get('stringValue', '')} for d in cevap.json().get('documents', [])] if cevap.status_code == 200 else []
-        k_list.reverse();
+        k_list.reverse()
         return render_template('ogrenci_kaynaklar.html', kaynaklar=k_list)
     except: return render_template('ogrenci_kaynaklar.html', kaynaklar=[])
 @app.route('/ogrenci_siralama')
@@ -323,6 +314,85 @@ def puan_ekle():
                     return {"status": "success", "yeni_puan": yeni_puan}
     except: pass
     return {"status": "error"}
+
+
+# =========================================================================
+# YAPAY ZEKA OTOMATİK ÇARŞAMBA QUİZİ MOTORU
+# =========================================================================
+
+def yapay_zeka_quiz_hazirla():
+    try:
+        print("🤖 Yapay Zeka Devrede: Takvim analiz ediliyor...")
+        
+        # 1. Takvimdeki son görevleri ve dersleri çek
+        takvim_konulari = []
+        res = requests.get(FIREBASE_TASK_URL)
+        if res.status_code == 200:
+            for d in res.json().get('documents', []):
+                f = d.get('fields', {})
+                ders = f.get('ders', {}).get('stringValue', '')
+                baslik = f.get('baslik', {}).get('stringValue', '')
+                if ders and baslik:
+                    takvim_konulari.append(f"{ders} - {baslik}")
+        
+        # Son 3 konuyu al (Çok fazla konuyu karıştırmamak için)
+        haftanin_konulari = takvim_konulari[-3:] if takvim_konulari else ["Genel Kültür"]
+        konu_metni = ", ".join(haftanin_konulari)
+        print(f"📚 Bu haftanın konuları bulundu: {konu_metni}")
+        
+        # 2. Yeni Quizi Veritabanına Oluştur
+        quiz_baslik = f"🤖 AI Çarşamba Quizi: {datetime.datetime.now().strftime('%d.%m.%Y')}"
+        quiz_aciklama = f"Yapay zeka tarafından bu haftanın işlenen konuları ({konu_metni}) baz alınarak otomatik hazırlanmıştır."
+        
+        yeni_quiz = requests.post(FIREBASE_QUIZ_URL, json={
+            "fields": {
+                "baslik": {"stringValue": quiz_baslik},
+                "sinav_turu": {"stringValue": "Yapay Zeka Üretimi"},
+                "aciklama": {"stringValue": quiz_aciklama}
+            }
+        })
+        
+        if yeni_quiz.status_code == 200:
+            quiz_id = yeni_quiz.json().get('name').split('/')[-1]
+            
+            # 3. Yapay Zeka Simülasyonu (Buraya OpenAI/Gemini bağlanacak)
+            ai_sorular = [
+                {
+                    "soru": f"İşlediğiniz '{haftanin_konulari[0]}' konusuyla ilgili temel kural nedir?",
+                    "a": "Kural A", "b": "Kural B", "c": "Kural C", "d": "Kural D", 
+                    "dogru": "A", "cozum": "Yapay zeka notu: Bu konu haftalık takvimden çekildi."
+                },
+                {
+                    "soru": f"Aşağıdakilerden hangisi son işlenen konunun bir alt başlığıdır?",
+                    "a": "Başlık 1", "b": "Başlık 2", "c": "Başlık 3", "d": "Başlık 4", 
+                    "dogru": "C", "cozum": "Yapay Zeka araştırmasına göre C şıkkı doğru."
+                }
+            ]
+            
+            # 4. Üretilen Soruları Quizin İçine Ekle
+            for soru in ai_sorular:
+                requests.post(FIREBASE_QUESTION_URL, json={
+                    "fields": {
+                        "quiz_id": {"stringValue": quiz_id},
+                        "soru_metni": {"stringValue": soru['soru']},
+                        "a": {"stringValue": soru['a']},
+                        "b": {"stringValue": soru['b']},
+                        "c": {"stringValue": soru['c']},
+                        "d": {"stringValue": soru['d']},
+                        "dogru": {"stringValue": soru['dogru']},
+                        "cozum": {"stringValue": soru['cozum']}
+                    }
+                })
+            print("✅ Yapay Zeka Quizi Başarıyla Veritabanına Yüklendi!")
+            
+    except Exception as e:
+        print(f"Yapay Zeka Quiz Üretim Hatası: {e}")
+
+# Zamanlayıcıyı Başlat (Her Çarşamba Saat 09:00'da çalışır)
+scheduler = BackgroundScheduler()
+scheduler.add_job(func=yapay_zeka_quiz_hazirla, trigger="cron", day_of_week='wed', hour=9, minute=0)
+scheduler.start()
+
 
 if __name__ == '__main__':
     app.run(debug=True)
