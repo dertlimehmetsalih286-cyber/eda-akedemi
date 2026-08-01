@@ -52,7 +52,9 @@ def logout():
 def ogretmen_paneli():
     if session.get('rol') != 'ogretmen': return redirect(url_for('index'))
     return render_template('ogretmen.html')
-    @app.route('/ogrenciler')
+
+# ÖĞRENCİLER ROTASI GERİ EKLENDİ (HATASIZ HİZALAMA)
+@app.route('/ogrenciler')
 def ogrenciler():
     if session.get('rol') != 'ogretmen': return redirect(url_for('index'))
     try:
@@ -73,6 +75,7 @@ def ogrenciler():
         toplam_tamamlanan = sum(o['tamamlanan'] for o in ogrenci_listesi)
         return render_template('ogrenciler.html', ogrenciler=ogrenci_listesi, toplam_ogrenci=toplam_ogrenci, en_yuksek_puan=en_yuksek_puan, toplam_tamamlanan=toplam_tamamlanan)
     except: return render_template('ogrenciler.html', ogrenciler=[], toplam_ogrenci=0, en_yuksek_puan=0, toplam_tamamlanan=0)
+
 
 @app.route('/ogretmen_analiz')
 def ogretmen_analiz():
@@ -194,23 +197,27 @@ def add_question(): requests.post(FIREBASE_QUESTION_URL, json={"fields": {"quiz_
 def add_resource(): requests.post(FIREBASE_RESOURCE_URL, json={"fields": {"baslik": {"stringValue": request.form.get('baslik')}, "aciklama": {"stringValue": request.form.get('aciklama', '')}, "tur": {"stringValue": request.form.get('tur')}, "url": {"stringValue": request.form.get('url')}}}); return redirect(url_for('kaynaklar'))
 
 # =========================================================================
-# ÖĞRENCİ PANELİ ROTALARI (Sadeleştirildi)
+# ÖĞRENCİ PANELİ ROTALARI
 # =========================================================================
 
 @app.route('/ogrenci')
-def ogrenci_dashboard(): return render_template('ogrenci_dashboard.html') if session.get('rol') == 'ogrenci' else redirect(url_for('index'))
+def ogrenci_dashboard(): 
+    if session.get('rol') != 'ogrenci': return redirect(url_for('index'))
+    return render_template('ogrenci_dashboard.html')
 
 @app.route('/ogrenci_gorevler')
 def ogrenci_gorevler():
+    if session.get('rol') != 'ogrenci': return redirect(url_for('index'))
     try:
         cevap = requests.get(FIREBASE_TASK_URL)
-        gorevler = [{"id": d.get('name', '').split('/')[-1], "sinav_turu": d.get('fields', {}).get('sinav_turu', {}).get('stringValue', ''), "ders": d.get('fields', {}).get('ders', {}).get('stringValue', ''), "baslik": d.get('fields', {}).get('baslik', {}).get('stringValue', ''), "aciklama": d.get('fields', {}).get('aciklama', {}).get('stringValue', ''), "son_tarih": d.get('fields', {}).get('son_tarih', {}).get('stringValue', ''), "oncelik": d.get('fields', {}).get('oncelik', {}).get('stringValue', '')} for d in cevap.json().get('documents', [])] if cevap.status_code == 200 else []
+        gorevler = [{"id": d.get('name', '').split('/')[-1], "sinav_turu": d.get('fields', {}).get('sinav_turu', {}).get('stringValue', ''), "ders": d.get('fields', {}).get('ders', {}).get('stringValue', ''), "baslik": d.get('fields', {}).get('baslik', {}).get('stringValue', ''), "son_tarih": d.get('fields', {}).get('son_tarih', {}).get('stringValue', ''), "oncelik": d.get('fields', {}).get('oncelik', {}).get('stringValue', '')} for d in cevap.json().get('documents', [])] if cevap.status_code == 200 else []
         gorevler.reverse()
         return render_template('ogrenci_gorevler.html', gorevler=gorevler)
     except: return render_template('ogrenci_gorevler.html', gorevler=[])
 
 @app.route('/ogrenci_testler')
 def ogrenci_testler():
+    if session.get('rol') != 'ogrenci': return redirect(url_for('index'))
     quizler, sorular = [], []
     try:
         res_q = requests.get(FIREBASE_QUIZ_URL)
@@ -220,14 +227,16 @@ def ogrenci_testler():
 
 @app.route('/ogrenci_kaynaklar')
 def ogrenci_kaynaklar():
+    if session.get('rol') != 'ogrenci': return redirect(url_for('index'))
     try:
         cevap = requests.get(FIREBASE_RESOURCE_URL)
-        k_list = [{"baslik": d.get('fields', {}).get('baslik', {}).get('stringValue', ''), "aciklama": d.get('fields', {}).get('aciklama', {}).get('stringValue', ''), "url": d.get('fields', {}).get('url', {}).get('stringValue', '')} for d in cevap.json().get('documents', [])] if cevap.status_code == 200 else []
+        k_list = [{"baslik": d.get('fields', {}).get('baslik', {}).get('stringValue', ''), "url": d.get('fields', {}).get('url', {}).get('stringValue', '')} for d in cevap.json().get('documents', [])] if cevap.status_code == 200 else []
         return render_template('ogrenci_kaynaklar.html', kaynaklar=k_list)
     except: return render_template('ogrenci_kaynaklar.html', kaynaklar=[])
 
 @app.route('/ogrenci_siralama')
 def ogrenci_siralama():
+    if session.get('rol') != 'ogrenci': return redirect(url_for('index'))
     try:
         cevap = requests.get(FIREBASE_USER_URL)
         ogrenciler = [{"isim": d.get('fields', {}).get('isim', {}).get('stringValue', 'Öğrenci'), "puan": int(d.get('fields', {}).get('puan', {}).get('integerValue', d.get('fields', {}).get('puan', {}).get('stringValue', '0')))} for d in cevap.json().get('documents', []) if d.get('fields', {}).get('rol', {}).get('stringValue') == 'ogrenci'] if cevap.status_code == 200 else []
