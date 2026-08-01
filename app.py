@@ -254,13 +254,6 @@ def add_resource(): requests.post(FIREBASE_RESOURCE_URL, json={"fields": {"basli
 
 @app.route('/ogrenci')
 def ogrenci_dashboard(): return render_template('ogrenci_dashboard.html') if session.get('rol') == 'ogrenci' else redirect(url_for('index'))
-@app.route('/ogrenci_takvim')
-def ogrenci_takvim():
-    try:
-        cevap = requests.get(FIREBASE_EVENT_URL)
-        etkinlikler = [{"baslik": d.get('fields', {}).get('baslik', {}).get('stringValue', ''), "aciklama": d.get('fields', {}).get('aciklama', {}).get('stringValue', ''), "tarih": d.get('fields', {}).get('tarih', {}).get('stringValue', ''), "tur": d.get('fields', {}).get('tur', {}).get('stringValue', '')} for d in cevap.json().get('documents', [])] if cevap.status_code == 200 else []
-        return render_template('ogrenci_takvim.html', etkinlikler=etkinlikler)
-    except: return render_template('ogrenci_takvim.html', etkinlikler=[])
 @app.route('/ogrenci_gorevler')
 def ogrenci_gorevler():
     try:
