@@ -246,8 +246,20 @@ def kaynaklar():
     except: return render_template('kaynaklar.html', kaynaklar=[])
 
 # --- ÖĞRETMEN VERİ EKLEME POST İŞLEMLERİ ---
-@app.route('/add-event', methods=['POST'])
-def add_event(): requests.post(FIREBASE_EVENT_URL, json={"fields": {"baslik": {"stringValue": request.form.get('baslik')}, "aciklama": {"stringValue": request.form.get('aciklama', '')}, "tarih": {"stringValue": request.form.get('tarih')}, "tur": {"stringValue": request.form.get('tur')}}}); return redirect(url_for('takvim'))
+@app.route('/add-task', methods=['POST'])
+def add_task(): 
+    requests.post(FIREBASE_TASK_URL, json={
+        "fields": {
+            "sinav_turu": {"stringValue": request.form.get('sinav_turu')}, 
+            "ders": {"stringValue": request.form.get('ders')}, 
+            "baslik": {"stringValue": request.form.get('baslik')}, 
+            "aciklama": {"stringValue": request.form.get('aciklama', '')}, 
+            "son_tarih": {"stringValue": request.form.get('son_tarih')}, 
+            "oncelik": {"stringValue": request.form.get('oncelik')}
+        }
+    })
+    # YÖNLENDİRME BURADA TAKVİME ÇEVRİLDİ:
+    return redirect(url_for('takvim'))
 @app.route('/add-task', methods=['POST'])
 def add_task(): requests.post(FIREBASE_TASK_URL, json={"fields": {"sinav_turu": {"stringValue": request.form.get('sinav_turu')}, "ders": {"stringValue": request.form.get('ders')}, "baslik": {"stringValue": request.form.get('baslik')}, "aciklama": {"stringValue": request.form.get('aciklama', '')}, "son_tarih": {"stringValue": request.form.get('son_tarih')}, "oncelik": {"stringValue": request.form.get('oncelik')}}}); return redirect(url_for('gorev'))
 @app.route('/add-quiz', methods=['POST'])
