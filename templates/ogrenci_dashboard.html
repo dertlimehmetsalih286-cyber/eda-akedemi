@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>Eda Akademi - Öğrenci Paneli</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { display: flex; min-height: 100vh; background-color: #f8f9fc; }
+        .sidebar { width: 260px; background-color: white; border-right: 1px solid #e5e7eb; display: flex; flex-direction: column; padding: 20px 0; position: fixed; height: 100vh; top: 0; left: 0; z-index: 1000; }
+        .logo-container { display: flex; align-items: center; padding: 0 20px 30px 20px; font-size: 22px; font-weight: bold; color: #111827; }
+        .logo-icon { background-color: #10b981; width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-right: 15px; }
+        .logo-icon svg { width: 24px; height: 24px; fill: white; }
+        .nav-links { list-style: none; flex-grow: 1; }
+        .nav-item { padding: 0 15px; margin-bottom: 5px; }
+        .nav-link { display: flex; align-items: center; padding: 12px 20px; text-decoration: none; color: #4b5563; font-weight: 500; border-radius: 8px; transition: all 0.2s; }
+        .nav-link.active { background-color: #10b981; color: white; }
+        .nav-link:hover:not(.active) { background-color: #f3f4f6; color: #111827; }
+        .nav-icon { margin-right: 15px; font-size: 18px; width: 24px; text-align: center; }
+        .main-content { margin-left: 260px; padding: 40px; width: calc(100% - 260px); max-width: 1200px; }
+    </style>
+</head>
+<body>
+    <aside class="sidebar">
+        <div class="logo-container">
+            <div class="logo-icon"><svg viewBox="0 0 24 24"><path d="M12 3L1 9l4 2.18v6L12 21l7-3.82v-6l2.81-1.53L12 3zm6.82 6L12 12.72 5.18 9 12 5.28 18.82 9zM17 15.99l-5 2.73-5-2.73v-3.72l5 2.73 5-2.73v3.72z"/></svg></div>
+            Eda Akademi
+        </div>
+        <ul class="nav-links">
+            <li class="nav-item"><a href="/ogrenci" class="nav-link active"><span class="nav-icon">⊞</span> Ana Sayfa</a></li>
+            <li class="nav-item"><a href="/ogrenci_gorevler" class="nav-link"><span class="nav-icon">📅</span> Takvim & Görevler</a></li>
+            <li class="nav-item"><a href="/ogrenci_testler" class="nav-link"><span class="nav-icon">🧠</span> Quizlerim</a></li>
+            <li class="nav-item"><a href="/ogrenci_kaynaklar" class="nav-link"><span class="nav-icon">📚</span> Kaynaklar</a></li>
+            <li class="nav-item"><a href="/ogrenci_siralama" class="nav-link"><span class="nav-icon">🏆</span> Liderlik Tablosu</a></li>
+        </ul>
+        <div style="padding: 20px; border-top: 1px solid #e5e7eb; margin-top: auto;">
+            <p style="font-weight: bold; color: #111827;">{{ session['isim'] }}</p>
+            <p style="font-size: 13px; color: #6b7280;">Öğrenci</p>
+            <a href="/logout" style="color: #ef4444; text-decoration: none; font-size: 14px; display: block; margin-top: 10px;">Çıkış Yap</a>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        <h1 style="color: #111827; margin-bottom: 10px;">Hoş Geldin, {{ session['isim'] }} 👋</h1>
+        <p style="color: #6b7280; margin-bottom: 40px;">Eda Akademi'deki durumunu ve sana atanan görevleri sol menüden takip edebilirsin.</p>
+        
+        <div style="background: white; border: 1px solid #e5e7eb; border-radius: 16px; padding: 30px; text-align: center;">
+            <h2 style="color: #10b981; margin-bottom: 15px;">Çalışmalarına Devam Et!</h2>
+            <p style="color: #6b7280; margin-bottom: 20px;">Hemen Takvim & Görevler sekmesine giderek öğretmeninin sana atadığı bu haftaki hedefleri görebilirsin.</p>
+            <a href="/ogrenci_gorevler" style="background: #10b981; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold;">Görevlerime Git</a>
+        </div>
+    </main>
+</body>
+</html>
