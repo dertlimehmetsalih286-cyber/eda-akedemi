@@ -138,11 +138,25 @@ def ogretmen_analiz():
 
 @app.route('/takvim')
 def takvim():
+    if session.get('rol') != 'ogretmen': return redirect(url_for('index'))
+    gorevler = []
     try:
-        cevap = requests.get(FIREBASE_EVENT_URL)
-        etkinlikler = [{"baslik": d.get('fields', {}).get('baslik', {}).get('stringValue', ''), "aciklama": d.get('fields', {}).get('aciklama', {}).get('stringValue', ''), "tarih": d.get('fields', {}).get('tarih', {}).get('stringValue', ''), "tur": d.get('fields', {}).get('tur', {}).get('stringValue', '')} for d in cevap.json().get('documents', [])] if cevap.status_code == 200 else []
-        return render_template('takvim.html', etkinlikler=etkinlikler)
-    except: return render_template('takvim.html', etkinlikler=[])
+        # Takvim sayfasında listelemek için görevleri çekiyoruz
+        cevap = requests.get(FIREBASE_TASK_URL)
+        if cevap.status_code == 200:
+            for d in cevap.json().get('documents', []):
+                f = d.get('fields', {})
+                gorevler.append({
+                    "sinav_turu": f.get('sinav_turu', {}).get('stringValue', ''),
+                    "ders": f.get('ders', {}).get('stringValue', ''),
+                    "baslik": f.get('baslik', {}).get('stringValue', ''),
+                    "son_tarih": f.get('son_tarih', {}).get('stringValue', ''),
+                    "oncelik": f.get('oncelik', {}).get('stringValue', '')
+                })
+        gorevler.reverse()
+    except: pass
+    
+    return render_template('takvim.html', gorevler=gorevler)
 
 @app.route('/gorev')
 def gorev():
