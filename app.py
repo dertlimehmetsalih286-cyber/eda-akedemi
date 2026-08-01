@@ -158,16 +158,6 @@ def takvim():
     
     return render_template('takvim.html', gorevler=gorevler)
 
-@app.route('/gorev')
-def gorev():
-    try:
-        cevap = requests.get(FIREBASE_TASK_URL)
-        gorevler = [{"sinav_turu": d.get('fields', {}).get('sinav_turu', {}).get('stringValue', ''), "ders": d.get('fields', {}).get('ders', {}).get('stringValue', ''), "baslik": d.get('fields', {}).get('baslik', {}).get('stringValue', ''), "aciklama": d.get('fields', {}).get('aciklama', {}).get('stringValue', ''), "son_tarih": d.get('fields', {}).get('son_tarih', {}).get('stringValue', ''), "oncelik": d.get('fields', {}).get('oncelik', {}).get('stringValue', '')} for d in cevap.json().get('documents', [])] if cevap.status_code == 200 else []
-        gorevler.reverse()
-        return render_template('gorev.html', gorevler=gorevler)
-    except: return render_template('gorev.html', gorevler=[])
-
-
 # =========================================================================
 # QUİZ YÖNETİMİ VE SONUÇLAR
 # =========================================================================
