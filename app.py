@@ -52,6 +52,27 @@ def logout():
 def ogretmen_paneli():
     if session.get('rol') != 'ogretmen': return redirect(url_for('index'))
     return render_template('ogretmen.html')
+    @app.route('/ogrenciler')
+def ogrenciler():
+    if session.get('rol') != 'ogretmen': return redirect(url_for('index'))
+    try:
+        cevap = requests.get(FIREBASE_USER_URL)
+        ogrenci_listesi = []
+        if cevap.status_code == 200:
+            for doc in cevap.json().get('documents', []):
+                alanlar = doc.get('fields', {})
+                if alanlar.get('rol', {}).get('stringValue') == 'ogrenci':
+                    puan_val = alanlar.get('puan', {})
+                    puan = int(puan_val.get('integerValue', puan_val.get('stringValue', '0')))
+                    tamamlanan = puan // 10 
+                    ogrenci_listesi.append({"isim": alanlar.get('isim', {}).get('stringValue', 'Öğrenci'), "kullanici_adi": alanlar.get('kullanici_adi', {}).get('stringValue', ''), "puan": puan, "tamamlanan": tamamlanan})
+        
+        ogrenci_listesi = sorted(ogrenci_listesi, key=lambda x: x['puan'], reverse=True)
+        toplam_ogrenci = len(ogrenci_listesi)
+        en_yuksek_puan = ogrenci_listesi[0]['puan'] if toplam_ogrenci > 0 else 0
+        toplam_tamamlanan = sum(o['tamamlanan'] for o in ogrenci_listesi)
+        return render_template('ogrenciler.html', ogrenciler=ogrenci_listesi, toplam_ogrenci=toplam_ogrenci, en_yuksek_puan=en_yuksek_puan, toplam_tamamlanan=toplam_tamamlanan)
+    except: return render_template('ogrenciler.html', ogrenciler=[], toplam_ogrenci=0, en_yuksek_puan=0, toplam_tamamlanan=0)
 
 @app.route('/ogretmen_analiz')
 def ogretmen_analiz():
